@@ -4,29 +4,33 @@ import axios from "axios";
 function App() {
   const [resumeText, setResumeText] = useState("");
   const [file, setFile] = useState(null);
-  const [feedback, setFeedback] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [textFeedback, setTextFeedback] = useState(null);
+  const [fileFeedback, setFileFeedback] = useState(null);
+  const [loadingText, setLoadingText] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
 
   // Handle text input submit
   const handleTextSubmit = async () => {
     if (!resumeText.trim()) return alert("Please paste your resume text.");
-    setLoading(true);
+    setLoadingText(true);
+    setTextFeedback(null);
     try {
       const res = await axios.post("http://localhost:5000/api/review-resume", {
         resumeText,
       });
-      setFeedback(res.data.feedback);
+      setTextFeedback(res.data.feedback || res.data); // backend returns { feedback }
     } catch (err) {
       console.error(err);
-      setFeedback("❌ Error fetching feedback (text).");
+      setTextFeedback("❌ Error fetching feedback (text).");
     }
-    setLoading(false);
+    setLoadingText(false);
   };
 
   // Handle file upload submit
   const handleFileSubmit = async () => {
     if (!file) return alert("Please upload a file first.");
-    setLoading(true);
+    setLoadingFile(true);
+    setFileFeedback(null);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -35,12 +39,12 @@ function App() {
       const res = await axios.post("http://localhost:5000/api/upload-resume", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setFeedback(res.data.feedback);
+      setFileFeedback(res.data.feedback || res.data);
     } catch (err) {
       console.error(err);
-      setFeedback("❌ Error uploading file.");
+      setFileFeedback("❌ Error uploading file.");
     }
-    setLoading(false);
+    setLoadingFile(false);
   };
 
   return (
@@ -57,9 +61,40 @@ function App() {
         style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
       />
       <br />
-      <button onClick={handleTextSubmit} disabled={loading}>
-        {loading ? "Analyzing..." : "Get Feedback (Text)"}
+      <button onClick={handleTextSubmit} disabled={loadingText}>
+        {loadingText ? "Analyzing..." : "Get Feedback (Text)"}
       </button>
+
+      {/* Output for Text */}
+      <div style={{ marginTop: "20px", textAlign: "left" }}>
+        {textFeedback && (
+          <>
+            <h3>🔍 Feedback (Text):</h3>
+            {typeof textFeedback === "string" ? (
+              <div>{textFeedback}</div>
+            ) : (
+              <>
+                {textFeedback.strengths && (
+                  <div>
+                    <h4>💪 Strengths</h4>
+                    <ul>
+                      {textFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {textFeedback.improvements && (
+                  <div>
+                    <h4>⚡ Improvements</h4>
+                    <ul>
+                      {textFeedback.improvements.map((imp, i) => <li key={i}>{imp}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
 
       <hr style={{ margin: "25px 0" }} />
 
@@ -70,14 +105,39 @@ function App() {
         onChange={(e) => setFile(e.target.files[0])}
       />
       <br />
-      <button onClick={handleFileSubmit} disabled={loading} style={{ marginTop: "10px" }}>
-        {loading ? "Analyzing..." : "Get Feedback (File)"}
+      <button onClick={handleFileSubmit} disabled={loadingFile} style={{ marginTop: "10px" }}>
+        {loadingFile ? "Analyzing..." : "Get Feedback (File)"}
       </button>
 
-      {/* Output */}
-      <div style={{ marginTop: "30px", textAlign: "left", whiteSpace: "pre-wrap" }}>
-        {feedback && <h3>🔍 Feedback:</h3>}
-        <p>{feedback}</p>
+      {/* Output for File */}
+      <div style={{ marginTop: "20px", textAlign: "left" }}>
+        {fileFeedback && (
+          <>
+            <h3>🔍 Feedback (File):</h3>
+            {typeof fileFeedback === "string" ? (
+              <div>{fileFeedback}</div>
+            ) : (
+              <>
+                {fileFeedback.strengths && (
+                  <div>
+                    <h4>💪 Strengths</h4>
+                    <ul>
+                      {fileFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {fileFeedback.improvements && (
+                  <div>
+                    <h4>⚡ Improvements</h4>
+                    <ul>
+                      {fileFeedback.improvements.map((imp, i) => <li key={i}>{imp}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -14,49 +14,54 @@ const upload = multer({ dest: "uploads/" });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// ---------- Review Resume (text input) ----------
 app.post("/api/review-resume", async (req, res) => {
   console.log("Received POST /api/review-resume");
   try {
     const { resumeText } = req.body;
-
-    // const prompt = `You are a career expert. Review the following resume and give 3 strengths and 3 improvement suggestions:\n\n${resumeText}`;
 
     const prompt = `
       You are an experienced HR recruiter and career coach.
       Review the following resume text and provide feedback.
 
       Instructions:
-      - List exactly 3 key strengths (skills, experiences, or achievements).
-      - List exactly 3 areas for improvement (clarity, formatting, missing skills, etc).
+      - Identify exactly 3 key strengths (skills, experiences, or achievements).
+      - Identify exactly 3 areas for improvement (clarity, formatting, missing skills, etc).
       - Be concise and use simple language that a fresher can understand.
 
-      Output format:
-      Strengths:
-      1. ...
-      2. ...
-      3. ...
-
-      Improvements:
-      1. ...
-      2. ...
-      3. ...
+      Output format (strict JSON only, no extra text):
+      {
+        "strengths": ["point 1", "point 2", "point 3"],
+        "improvements": ["point 1", "point 2", "point 3"]
+      }
 
       Resume:
       ${resumeText}
-      `;
-
-
+    `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
 
-    res.json({ feedback: result.response.text() });
+    let textResponse = result.response.text();
+    // 🧹 Remove code fences if AI adds them
+    textResponse = textResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    let feedback;
+    try {
+      feedback = JSON.parse(textResponse);
+    } catch (e) {
+      console.error("AI did not return valid JSON. Raw response:", textResponse);
+      return res.status(500).json({ error: "Invalid AI response format" });
+    }
+
+    res.json({ feedback });
   } catch (err) {
     console.error("Gemini API error:", err);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
+// ---------- Upload Resume (file upload) ----------
 app.post("/api/upload-resume", upload.single("file"), async (req, res) => {
   try {
     let resumeText = "";
@@ -95,28 +100,36 @@ app.post("/api/upload-resume", upload.single("file"), async (req, res) => {
       Review the following resume text and provide feedback.
 
       Instructions:
-      - List exactly 3 key strengths (skills, experiences, or achievements).
-      - List exactly 3 areas for improvement (clarity, formatting, missing skills, etc).
+      - Identify exactly 3 key strengths (skills, experiences, or achievements).
+      - Identify exactly 3 areas for improvement (clarity, formatting, missing skills, etc).
       - Be concise and use simple language that a fresher can understand.
 
-      Output format:
-      Strengths:
-      1. ...
-      2. ...
-      3. ...
-
-      Improvements:
-      1. ...
-      2. ...
-      3. ...
+      Output format (strict JSON only, no extra text):
+      {
+        "strengths": ["point 1", "point 2", "point 3"],
+        "improvements": ["point 1", "point 2", "point 3"]
+      }
 
       Resume:
-    ${resumeText}
+      ${resumeText}
     `;
+
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
 
-    res.json({ feedback: result.response.text() });
+    let textResponse = result.response.text();
+    // 🧹 Remove code fences if AI adds them
+    textResponse = textResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    let feedback;
+    try {
+      feedback = JSON.parse(textResponse);
+    } catch (e) {
+      console.error("AI did not return valid JSON. Raw response:", textResponse);
+      return res.status(500).json({ error: "Invalid AI response format" });
+    }
+
+    res.json({ feedback });
   } catch (err) {
     console.error("File upload error:", err);
     res.status(500).json({ error: "Something went wrong while processing file" });
