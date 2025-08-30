@@ -21,7 +21,7 @@ function App() {
       setTextFeedback(res.data.feedback || res.data); // backend returns { feedback }
     } catch (err) {
       console.error(err);
-      setTextFeedback("❌ Error fetching feedback (text).");
+      setTextFeedback("Error fetching feedback (text).");
     }
     setLoadingText(false);
   };
