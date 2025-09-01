@@ -1,146 +1,182 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import './App.css';
 
-function App() {
-  const [resumeText, setResumeText] = useState("");
+const BOT_WELCOME = {
+  text: "Hello! I'm KareerBot, your personal career assistant. You can either type or paste your resume into the box below, or upload a document to get started.",
+  sender: "bot",
+};
+
+export default function App() {
   const [file, setFile] = useState(null);
-  const [textFeedback, setTextFeedback] = useState(null);
-  const [fileFeedback, setFileFeedback] = useState(null);
-  const [loadingText, setLoadingText] = useState(false);
-  const [loadingFile, setLoadingFile] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([BOT_WELCOME]);
+  const [fileUploaded, setFileUploaded] = useState(false);
+  const chatEndRef = useRef(null);
+  const [isBotTyping, setIsBotTyping] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Handle text input submit
-  const handleTextSubmit = async () => {
-    if (!resumeText.trim()) return alert("Please paste your resume text.");
-    setLoadingText(true);
-    setTextFeedback(null);
-    try {
-      const res = await axios.post("http://localhost:5000/api/review-resume", {
-        resumeText,
-      });
-      setTextFeedback(res.data.feedback || res.data); // backend returns { feedback }
-    } catch (err) {
-      console.error(err);
-      setTextFeedback("Error fetching feedback (text).");
-    }
-    setLoadingText(false);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory, isBotTyping]);
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+    // Optionally, you can trigger the upload immediately after a file is selected
+    // or keep the button for explicit user action.
   };
 
-  // Handle file upload submit
-  const handleFileSubmit = async () => {
-    if (!file) return alert("Please upload a file first.");
-    setLoadingFile(true);
-    setFileFeedback(null);
+  const handleUploadOrTextSubmit = async (e) => {
+    e.preventDefault();
+    if (loading) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+    let formData = new FormData();
+    let userMessage = chatInput;
+    
+    // Determine if the user is uploading a file or typing/pasting text
+    if (file) {
+      formData.append('file', file);
+      setChatHistory(prev => [...prev, { sender: 'user', text: `Uploading: ${file.name}`}]);
+      userMessage = "Analyzing resume...";
+    } else if (chatInput.trim()) {
+      formData.append('text', chatInput);
+      setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
+    } else {
+      return;
+    }
+
+    setChatInput('');
+    setLoading(true);
+    setIsBotTyping(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/upload-resume", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const endpoint = file ? "http://localhost:5000/api/upload-resume" : "http://localhost:5000/api/analyze-text";
+      const res = await axios.post(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setFileFeedback(res.data.feedback || res.data);
+
+      const feedback = res.data.feedback;
+      let initialMessage = "✅ Resume successfully analyzed! Here is some initial feedback:\n\n";
+      
+      initialMessage += "💪 **Strengths:**\n" + feedback.strengths.map(s => `- ${s}`).join('\n');
+      initialMessage += "\n\n⚡ **Areas for Improvement:**\n" + feedback.improvements.map(i => `- ${i}`).join('\n');
+      initialMessage += "\n\nFeel free to ask me follow-up questions, like 'How can I improve my work experience section?'";
+      
+      setChatHistory(prev => [...prev, { sender: 'bot', text: initialMessage }]);
+      setFileUploaded(true);
+      setFile(null); // Clear the file state
     } catch (err) {
+      setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ Error analyzing your resume. Please try again.' }]);
       console.error(err);
-      setFileFeedback("❌ Error uploading file.");
+    } finally {
+      setLoading(false);
+      setIsBotTyping(false);
     }
-    setLoadingFile(false);
+  };
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || loading) return;
+
+    const userMessage = chatInput;
+    setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
+    setChatInput('');
+    setLoading(true);
+    setIsBotTyping(true);
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/chat", { message: userMessage });
+      const botReply = res.data.reply;
+      setChatHistory(prev => [...prev, { sender: 'bot', text: botReply }]);
+    } catch (err) {
+      setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ Error getting a response. Please try again later.' }]);
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setIsBotTyping(false);
+    }
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
-    <div style={{ maxWidth: "650px", margin: "40px auto", textAlign: "center" }}>
-      <h1>💼 KareerBot</h1>
-      <p>Get instant AI feedback on your resume</p>
-
-      {/* Paste Resume Section */}
-      <textarea
-        rows="8"
-        placeholder="Paste your resume here..."
-        value={resumeText}
-        onChange={(e) => setResumeText(e.target.value)}
-        style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
-      />
-      <br />
-      <button onClick={handleTextSubmit} disabled={loadingText}>
-        {loadingText ? "Analyzing..." : "Get Feedback (Text)"}
-      </button>
-
-      {/* Output for Text */}
-      <div style={{ marginTop: "20px", textAlign: "left" }}>
-        {textFeedback && (
-          <>
-            <h3>🔍 Feedback (Text):</h3>
-            {typeof textFeedback === "string" ? (
-              <div>{textFeedback}</div>
-            ) : (
-              <>
-                {textFeedback.strengths && (
-                  <div>
-                    <h4>💪 Strengths</h4>
-                    <ul>
-                      {textFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-                {textFeedback.improvements && (
-                  <div>
-                    <h4>⚡ Improvements</h4>
-                    <ul>
-                      {textFeedback.improvements.map((imp, i) => <li key={i}>{imp}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+    <div className="app-container">
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>KareerBot Menu</h3>
+          <button className="close-btn" onClick={toggleSidebar}>
+            &times;
+          </button>
+        </div>
+        <ul className="sidebar-links">
+          <li>Home</li>
+          <li>History</li>
+          <li>Settings</li>
+          <li>About</li>
+        </ul>
       </div>
 
-      <hr style={{ margin: "25px 0" }} />
+      <div className="chat-window">
+        <header className="chat-header">
+          <button className="hamburger-menu" onClick={toggleSidebar}>
+            <span className="bar"></span>
+            <span className="bar"></span>
+            <span className="bar"></span>
+          </button>
+          <div className="header-title">
+            <span className="bot-name">KareerBot</span>
+          </div>
+        </header>
 
-      {/* File Upload Section */}
-      <input
-        type="file"
-        accept=".pdf,.docx"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
-      <br />
-      <button onClick={handleFileSubmit} disabled={loadingFile} style={{ marginTop: "10px" }}>
-        {loadingFile ? "Analyzing..." : "Get Feedback (File)"}
-      </button>
+        <div className="messages-container">
+          {chatHistory.map((msg, index) => (
+            <div key={index} className={`message ${msg.sender}`}>
+              <div className="message-content">
+                {msg.text.split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </div>
+          ))}
+          {isBotTyping && (
+            <div className="message bot">
+              <div className="typing-indicator">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
 
-      {/* Output for File */}
-      <div style={{ marginTop: "20px", textAlign: "left" }}>
-        {fileFeedback && (
-          <>
-            <h3>🔍 Feedback (File):</h3>
-            {typeof fileFeedback === "string" ? (
-              <div>{fileFeedback}</div>
-            ) : (
-              <>
-                {fileFeedback.strengths && (
-                  <div>
-                    <h4>💪 Strengths</h4>
-                    <ul>
-                      {fileFeedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-                {fileFeedback.improvements && (
-                  <div>
-                    <h4>⚡ Improvements</h4>
-                    <ul>
-                      {fileFeedback.improvements.map((imp, i) => <li key={i}>{imp}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+        <form onSubmit={fileUploaded ? handleChatSubmit : handleUploadOrTextSubmit} className="chat-input-form">
+          <textarea
+            className="chat-input-field"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder={fileUploaded ? "Type your question here..." : "Paste your resume or type here..."}
+            disabled={loading}
+            rows={1}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                (fileUploaded ? handleChatSubmit : handleUploadOrTextSubmit)(e);
+              }
+            }}
+          />
+          {!fileUploaded && (
+            <label className="file-upload-label">
+              <span className="material-icons">attach_file</span>
+              <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileChange} />
+            </label>
+          )}
+          <button type="submit" disabled={loading}>
+            <span className="material-icons">send</span>
+          </button>
+        </form>
       </div>
     </div>
   );
 }
-
-export default App;
