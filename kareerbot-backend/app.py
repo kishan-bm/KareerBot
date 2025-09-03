@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ from langchain.docstore.document import Document
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.vectorstores import Chroma # <-- New ChromaDB import
+from langchain_community.vectorstores import Chroma
 
 # File parsing imports
 import pypdf
@@ -32,8 +33,6 @@ chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=gen
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=genai_api_key)
 
 # We will use a unique folder for each user's vector store.
-# For this example, we will just use a single folder.
-# For a real application, you would create a unique folder for each user session.
 CHROMA_DB_PATH = "./chroma_db"
 
 # ---------- File Parsing Functions ----------
@@ -51,32 +50,36 @@ def get_docx_text(docx_file):
         text += para.text + "\n"
     return text
 
-# ---------- Ingestion and Initial Feedback Endpoint ----------
-@app.route("/api/upload-resume", methods=["POST"])
-def upload_resume():
+# ---------- Ingestion and Initial Feedback Endpoint (Unified) ----------
+@app.route("/api/process-resume", methods=["POST"])
+def process_resume():
     global vector_store
 
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    resume_text = ""
+    
+    if 'file' in request.files and request.files['file'].filename != '':
+        file = request.files['file']
+        try:
+            if file.mimetype == "application/pdf":
+                resume_text = get_pdf_text(file)
+            elif file.mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                resume_text = get_docx_text(file)
+            else:
+                return jsonify({"error": "Unsupported file type"}), 400
+        except Exception as e:
+            return jsonify({"error": f"Error processing file: {str(e)}"}), 500
+    
+    elif request.json and 'text' in request.json:
+        resume_text = request.json.get('text')
+    
+    if not resume_text:
+        return jsonify({"error": "No resume file or text provided."}), 400
 
     try:
-        if file.mimetype == "application/pdf":
-            resume_text = get_pdf_text(file)
-        elif file.mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            resume_text = get_docx_text(file)
-        else:
-            return jsonify({"error": "Unsupported file type"}), 400
-
-        # Create a document and split it into chunks
         docs = [Document(page_content=resume_text)]
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_documents(docs)
 
-        # Initialize ChromaDB and create a collection
         vector_store = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
@@ -84,7 +87,7 @@ def upload_resume():
         )
         vector_store.persist()
 
-        # Initial feedback generation using LangChain chat model
+        # Updated prompt with stricter instructions for JSON output
         initial_prompt = f"""
             You are an experienced HR recruiter and career coach.
             Review the following resume text and provide feedback.
@@ -92,7 +95,8 @@ def upload_resume():
             - Identify exactly 3 key strengths (skills, experiences, or achievements).
             - Identify exactly 3 areas for improvement (clarity, formatting, missing skills, etc).
             - Be concise and use simple language that a fresher can understand.
-            Output format (strict JSON only, no extra text):
+            - You MUST ONLY respond with a valid JSON object. Do not include any other text, greetings, or explanations.
+            Output format:
             {{
                 "strengths": ["point 1", "point 2", "point 3"],
                 "improvements": ["point 1", "point 2", "point 3"]
@@ -100,19 +104,25 @@ def upload_resume():
             Resume:
             {resume_text}
         """
-        response = chat_model.invoke(initial_prompt)
-        try:
-            feedback = json.loads(response.replace('```json', '').replace('```', '').strip())
-        except Exception:
-            feedback = response
+        response = chat_model.invoke(initial_prompt).content
+        
+        # Use regex to find and extract the JSON object
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            json_string = json_match.group(0)
+            feedback = json.loads(json_string)
+        else:
+            raise ValueError("Could not find a valid JSON object in the AI's response.")
+            
         return jsonify({"feedback": feedback})
+        
     except Exception as e:
+        print(f"Error in process_resume: {e}")
         return jsonify({"error": str(e)}), 500
 
-# ---------- Conversational Endpoint ----------
+# ---------- Conversational Endpoint (No changes needed here) ----------
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    # If the server restarts, we need to load the persisted DB.
     global vector_store
     if vector_store is None:
         try:
@@ -130,8 +140,9 @@ def chat():
 
     try:
         prompt_template = ChatPromptTemplate.from_template("""
-            You are a helpful and professional resume assistant. Answer the user's question based only on the provided context. If you can't find the answer, just say that you don't know.
-            
+        You are a helpful and professional resume assistant and career coach.
+        Answer the user's question. If the question is about the provided resume, use the context.
+        If the question is a general career or skill question or whatever, use your broader knowledge.            
             Context:
             {context}
             
@@ -141,12 +152,11 @@ def chat():
         document_chain = create_stuff_documents_chain(llm=chat_model, prompt=prompt_template)
         retrieval_chain = create_retrieval_chain(retriever=vector_store.as_retriever(), combine_docs_chain=document_chain)
         result = retrieval_chain.invoke({"input": message})
-        return jsonify({"reply": result})
+        return jsonify({"reply": result['answer']})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Make sure the chroma DB directory exists
     if not os.path.exists(CHROMA_DB_PATH):
         os.makedirs(CHROMA_DB_PATH)
     app.run(port=5000, debug=True)
