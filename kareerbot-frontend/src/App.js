@@ -335,6 +335,6 @@ export default function App() {
         </form>
       </div>
       {showPreview && <FilePreviewModal file={selectedFile} onClose={closePreview} />}
-    </div>
+    </div> 
   );
 }
