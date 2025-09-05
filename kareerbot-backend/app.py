@@ -1,11 +1,10 @@
 import os
 import json
 import re
+import shutil # New import for deleting the folder
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-
-# LangChain and Gemini Imports
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
@@ -13,29 +12,21 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import Chroma
-
-# File parsing imports
 import pypdf
 from docx import Document as DocxDocument
 
-# Load environment variables
 load_dotenv()
-
 app = Flask(__name__)
 CORS(app)
 
-# Global state for the session
 vector_store = None
 genai_api_key = os.getenv("GEMINI_API_KEY")
 
-# Initialize LangChain components
 chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=genai_api_key)
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=genai_api_key)
 
-# We will use a unique folder for each user's vector store.
 CHROMA_DB_PATH = "./chroma_db"
 
-# ---------- File Parsing Functions ----------
 def get_pdf_text(pdf_file):
     reader = pypdf.PdfReader(pdf_file)
     text = ""
@@ -50,13 +41,16 @@ def get_docx_text(docx_file):
         text += para.text + "\n"
     return text
 
-# ---------- Ingestion and Initial Feedback Endpoint (Unified) ----------
 @app.route("/api/process-resume", methods=["POST"])
 def process_resume():
     global vector_store
 
-    resume_text = ""
+    # --- FIX 1: Delete old vector store before creating a new one ---
+    if os.path.exists(CHROMA_DB_PATH):
+        shutil.rmtree(CHROMA_DB_PATH)
+        print("Old vector store deleted. Creating a new one.")
     
+    resume_text = ""
     if 'file' in request.files and request.files['file'].filename != '':
         file = request.files['file']
         try:
@@ -87,7 +81,6 @@ def process_resume():
         )
         vector_store.persist()
 
-        # Updated prompt with stricter instructions for JSON output
         initial_prompt = f"""
             You are an experienced HR recruiter and career coach.
             Review the following resume text and provide feedback.
@@ -106,7 +99,6 @@ def process_resume():
         """
         response = chat_model.invoke(initial_prompt).content
         
-        # Use regex to find and extract the JSON object
         json_match = re.search(r'\{.*\}', response, re.DOTALL)
         if json_match:
             json_string = json_match.group(0)
@@ -120,7 +112,6 @@ def process_resume():
         print(f"Error in process_resume: {e}")
         return jsonify({"error": str(e)}), 500
 
-# ---------- Conversational Endpoint (No changes needed here) ----------
 @app.route("/api/chat", methods=["POST"])
 def chat():
     global vector_store
@@ -139,10 +130,12 @@ def chat():
         return jsonify({"error": "Message is required"}), 400
 
     try:
+        # --- FIX 2: Relaxing the prompt for general questions ---
         prompt_template = ChatPromptTemplate.from_template("""
-        You are a helpful and professional resume assistant and career coach.
-        Answer the user's question. If the question is about the provided resume, use the context.
-        If the question is a general career or skill question or whatever, use your broader knowledge.            
+            You are a helpful and professional resume assistant and career coach.
+            Answer the user's question. If the question is about the provided resume, use the context.
+            If the question is a general career or skill question, use your broader knowledge.
+            
             Context:
             {context}
             
