@@ -36,7 +36,6 @@ app.post("/api/upload-resume", upload.single("file"), async (req, res) => {
   try {
     let resumeText = ""; // Variable to hold the extracted text from the resume.
 
-    // This is the file parsing logic. It checks the file type and uses the appropriate library.
     // This is the "document loading" part of the RAG pipeline.
     if (req.file.mimetype === "application/pdf") {
       const PDFParser = (await import("pdf2json")).default;
