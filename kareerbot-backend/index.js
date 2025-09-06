@@ -19,8 +19,7 @@ const app = express();
 app.use(cors()); 
 app.use(express.json()); 
 
-const upload = multer({ dest: "uploads/" }); // Configures Multer to save uploaded files to a folder named "uploads".
-
+const upload = multer({ dest: "uploads/" }); 
 // These are global variables that persist for the life of the server process.
 // `vectorStore` will hold the processed resume data. It's `null` initially.
 let vectorStore = null; 
