@@ -27,7 +27,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); // The standar
 const chatModel = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
   apiKey: process.env.GEMINI_API_KEY,
-}); // This is the LangChain-compatible Gemini model. It's used for the conversational part.
+}); 
 const embeddings = new GoogleGenerativeAIEmbeddings(); // This client is used to create numerical vectors from text.
 
 // ---------- The File Upload and Ingestion Endpoint ----------
