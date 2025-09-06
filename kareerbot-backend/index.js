@@ -1,24 +1,23 @@
 import express from "express"; 
 import cors from "cors"; 
-import dotenv from "dotenv"; // Imports 'dotenv' to load environment variables from a `.env` file, like your API key.
-import { GoogleGenerativeAI } from "@google/generative-ai"; // Imports the main client for the Gemini API.
-import multer from "multer"; // Imports Multer, a middleware specifically for handling file uploads.
-import fs from "fs"; // Imports the built-in Node.js File System module to interact with files on the server.
-
+import dotenv from "dotenv"; 
+import { GoogleGenerativeAI } from "@google/generative-ai"; 
+import multer from "multer"; 
+import fs from "fs"; 
 // These imports are for the new RAG (Retrieval-Augmented Generation) system.
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // This is a tool to break a large document (your resume) into smaller, manageable chunks.
-import { Document } from "@langchain/core/documents"; // A standard format in LangChain to represent a piece of text.
-import { createRetrievalChain } from "langchain/chains/retrieval"; // A chain that automates the RAG process: retrieve, augment, generate.
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents"; // A sub-chain that formats retrieved documents into a single prompt.
-import { ChatPromptTemplate } from "@langchain/core/prompts"; // A template for building dynamic, structured prompts for the AI.
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai"; // LangChain's specific wrapper for the Gemini model, which integrates with chains.
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai"; // The model that converts text into numerical vectors (embeddings).
-import { MemoryVectorStore } from "langchain/vectorstores/memory"; // An in-memory vector database to store the resume's text and vectors.
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; 
+import { Document } from "@langchain/core/documents"; 
+import { createRetrievalChain } from "langchain/chains/retrieval"; 
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents"; 
+import { ChatPromptTemplate } from "@langchain/core/prompts"; 
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai"; 
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai"; 
+import { MemoryVectorStore } from "langchain/vectorstores/memory"; 
 
-dotenv.config(); // This line loads the variables from your `.env` file into `process.env`.
-const app = express(); // Creates the Express application instance.
-app.use(cors()); // Applies the CORS middleware, allowing your frontend to make requests.
-app.use(express.json()); // Tells Express to parse JSON formatted request bodies.
+dotenv.config(); 
+const app = express(); 
+app.use(cors()); 
+app.use(express.json()); 
 
 const upload = multer({ dest: "uploads/" }); // Configures Multer to save uploaded files to a folder named "uploads".
 
