@@ -34,7 +34,7 @@ const embeddings = new GoogleGenerativeAIEmbeddings(); // This client is used to
 // This endpoint handles both the initial file upload and the first-time setup of the RAG system.
 app.post("/api/upload-resume", upload.single("file"), async (req, res) => {
   try {
-    let resumeText = ""; // Variable to hold the extracted text from the resume.
+    let resumeText = ""; 
 
     // This is the "document loading" part of the RAG pipeline.
     if (req.file.mimetype === "application/pdf") {
