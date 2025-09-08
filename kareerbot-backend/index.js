@@ -103,7 +103,6 @@ app.post("/api/chat", async (req, res) => {
     // This line creates a chain that will take retrieved documents and "stuff" them into the {context} placeholder of the prompt.
     const documentChain = await createStuffDocumentsChain({ llm: chatModel, prompt });
 
-    // This line creates the main RAG chain. It connects the document chain to a retriever.
     // The retriever is a LangChain tool that performs the semantic search on the vector store.
     const retrievalChain = await createRetrievalChain({ combineDocsChain: documentChain, retriever: vectorStore.asRetriever() });
 
@@ -121,6 +120,8 @@ app.post("/api/chat", async (req, res) => {
     // ... error handling ...
   }
 });
+
+const prompt2 = `You are an expert career coach. Provide feedback on the resume provided.
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`)); // Starts the server and listens for requests.
