@@ -121,7 +121,5 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-const prompt2 = `You are an expert career coach. Provide feedback on the resume provided.
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`)); // Starts the server and listens for requests.
+const PORT = process.env.PORT || 6000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
