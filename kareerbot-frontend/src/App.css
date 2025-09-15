@@ -1,4 +1,4 @@
-body, html, #root {
+/* body, html, #root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -8,6 +8,7 @@ body, html, #root {
 
 .app-container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
@@ -16,13 +17,19 @@ body, html, #root {
 /* --- Chat Window Styles --- */
 .chat-window {
   display: flex;
-  flex-direction: column;
-  flex: 1;
+  flex-direction: column; /* This stacks the header, messages, and input vertically */
+  flex: 1; /* This tells the chat window to take up all available horizontal space */
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin: 20px;
-  overflow: hidden;
+  /* margin: 20px; */
+  overflow: hidden; /* This prevents content from spilling out */
+ 
+  width: 100%;
+  min-width: 1000px;
+  margin-top: 0px;
+  margin-bottom: 50px;
+
 }
 
 .chat-header {
@@ -31,7 +38,8 @@ body, html, #root {
   padding: 15px 20px;
   border-bottom: 1px solid #eee;
   background-color: #f7f7f8;
-  color: #333;
+  color: #464646;
+  margin-top: 0%;
 }
 
 .hamburger-menu {
@@ -171,7 +179,7 @@ body, html, #root {
   border-radius: 20px;
   font-size: 16px;
   resize: none;
-  background-color: transparent;
+  background-color: rgb(140, 138, 138);
   outline: none;
 }
 
@@ -480,4 +488,639 @@ body, html, #root {
   .chat-window {
     margin: 10px;
   }
+}
+
+/* --- New Navigation Bar --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background-color: #2c3e50;
+  padding: 10px 0;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+  z-index: 99;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.bottom-nav button:hover {
+  background-color: #3b5066;
+}
+
+.bottom-nav button.active {
+  background-color: #257341;
+}
+
+/* Update main app-container margin to make space for the nav bar */
+.app-container {
+  display: flex; /* This makes the sidebar and chat window a flexible row */
+  height: 100vh; /* This forces the app to take up the full height of the viewport */
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* --- Agent Page Styling (for the placeholder) --- */
+.agent-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* This forces it to fill the entire chat-window */
+  padding: 20px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.plan-container {
+  text-align: left;
+  margin-top: 40px;
+  /* padding: 20px; */
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  flex: 1; /* This is the key fix: It tells the plan container to take up all remaining vertical space */
+  overflow-y: auto; /* This now works and enables scrolling */
+  min-width: 1000px;
+  margin-left: 0px;
+}
+
+/* Top navigation for larger screens
+.top-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #2c3e50;
+  padding: 10px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 100;
+  justify-content: center;
+  gap: 20px;
+}
+.top-nav button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 16px;
+  font-weight: bold;
+}
+.top-nav button:hover {
+  background-color: #3b5066;
+}
+
+.top-nav button.active {
+  background-color: #257341;
+} */ */
+
+
+
+/* --- Global & App Layout --- */
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f8;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative; /* Used for positioning the bottom navigation bar */
+}
+
+.main-content-pane {
+  display: flex;
+  flex: 1; /* This is the key fix: it tells this container to grow and take up all available space */
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* --- Chat Window Styles (Resume Bot) --- */
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  max-height: 90vh; /* Set a max height for the chat window itself */
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f7f7f8;
+  color: #333;
+}
+
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hamburger-menu .bar {
+  width: 100%;
+  height: 3px;
+  background-color: #555;
+  border-radius: 1px;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-title {
+  flex-grow: 1;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.bot {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 75%;
+  padding: 12px 18px;
+  border-radius: 18px;
+  word-wrap: break-word;
+}
+
+.message.user .message-content {
+  background-color: #e6f4ea;
+  color: #222;
+  border-bottom-right-radius: 4px;
+}
+
+.message.bot .message-content {
+  background-color: #f0f2f5;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 50px;
+  height: 30px;
+  border-radius: 18px;
+  background-color: #f0f2f5;
+  padding: 0 10px;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background-color: #b5c9b5;
+  border-radius: 50%;
+  animation: typing 1s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 100% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.chat-input-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+  gap: 10px;
+}
+
+.input-field-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: #f7f7f8;
+  border-radius: 24px;
+  padding: 5px 12px;
+  gap: 8px;
+}
+
+.chat-input-field {
+  flex-grow: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 16px;
+  resize: none;
+  background-color: transparent;
+  outline: none;
+}
+
+.left-attach {
+  margin-right: 4px;
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #e4ece7;
+  color: black;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.send-btn img {
+  width: 22px;
+  height: 22px;
+}
+
+.send-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.file-upload-label {
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.file-upload-label:hover {
+  background-color: #e0e2e5;
+}
+
+.file-upload-label img {
+  width: 20px;
+  height: 20px;
+}
+
+.file-upload-label input[type="file"] {
+  display: none;
+}
+
+.chat-input-form button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #e4ece7;
+  color: black;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.chat-input-form button img {
+  width: 20px;
+  height: 20px;
+}
+
+.chat-input-form button:hover:not(:disabled) {
+  background-color: #ecf0ee;
+}
+
+.chat-input-form button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* --- Sidebar Styles --- */
+.sidebar {
+  width: 0;
+  background-color: #2c3e50;
+  color: white;
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  height: 100%;
+  z-index: 100;
+}
+
+.sidebar.open {
+  width: 250px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #4a647d;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.sidebar-search-container {
+  padding: 10px 20px;
+  border-bottom: 1px solid #4a647d;
+}
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #3b5066;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.search-bar .search-icon {
+  margin-right: 8px;
+  color: #aebfc2;
+}
+
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: white;
+  outline: none;
+}
+
+.search-bar input::placeholder {
+  color: #aebfc2;
+}
+
+.sidebar-links {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-links li {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-links li:hover, .sidebar-links li.active {
+  background-color: #3b5066;
+}
+
+.new-chat-btn {
+  background-color: #3b5066;
+  border-radius: 8px;
+  margin: 10px 20px;
+  padding: 10px 15px;
+}
+
+.chat-history-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bottom-sidebar-links {
+  border-top: 1px solid #4a647d;
+  padding-top: 10px;
+}
+
+.profile-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+}
+
+.profile-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #aebfc2;
+  color: #2c3e50;
+  border-radius: 50%;
+  padding: 2px;
+  object-fit: cover;
+}
+
+.profile-name {
+  font-weight: bold;
+}
+
+/* File Preview Pill */
+.file-preview-pill {
+  display: flex;
+  align-items: center;
+  background-color: #f0f2f5;
+  border-radius: 20px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  max-width: 100%;
+}
+
+.file-preview-pill:hover {
+  background-color: #e0e2e5;
+}
+
+.file-preview-pill .material-icons {
+  font-size: 20px;
+  color: #888;
+  margin-right: 8px;
+  align-items: center;
+  /* padding-left: 50%; */
+}
+
+.file-preview-pill p {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  color: #555;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 20px;
+  margin-left: 8px;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+/* Modal for full-screen preview */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.modal-file-info {
+  text-align: center;
+}
+
+.modal-file-info .file-icon {
+  font-size: 50px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .chat-window {
+    margin: 10px;
+  }
+}
+
+/* --- New Navigation Bar --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background-color: #2c3e50;
+  padding: 10px 0;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+  z-index: 99;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.bottom-nav button:hover {
+  background-color: #3b5066;
+}
+
+.bottom-nav button.active {
+  background-color: #257341;
 }

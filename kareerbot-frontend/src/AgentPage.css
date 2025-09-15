@@ -1,0 +1,107 @@
+.agent-page-container {
+    padding: 20px;
+    text-align: center;
+    max-width: 2500px;
+    margin: 0 auto;
+}
+
+.agent-page-container h2 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 0rem;
+    margin-top: 0px;
+    
+}
+
+.agent-page-container p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 2rem;
+}
+
+.goal-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.goal-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.goal-input:focus {
+    border-color: #257341;
+}
+
+.goal-submit-button {
+    padding: 12px 20px;
+    background-color: #257341;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.goal-submit-button:hover:not(:disabled) {
+    background-color: #1e5a36;
+}
+
+.goal-submit-button:disabled {
+    background-color: #a5d6a7;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #d9534f;
+    margin-top: 10px;
+}
+
+.plan-container {
+    text-align: left;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background-color: #f9f9f9;
+}
+
+.plan-container h3 {
+    border-bottom: 2px solid #257341;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.plan-steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.plan-step {
+    padding: 15px;
+    border-left: 4px solid #257341;
+    background-color: #e6f4ea;
+    border-radius: 8px;
+}
+
+.plan-step h4 {
+    margin: 0 0 5px 0;
+    color: #257341;
+}
+
+.plan-step p {
+    margin: 0;
+    color: #555;
+}
