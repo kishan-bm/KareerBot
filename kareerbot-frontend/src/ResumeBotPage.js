@@ -3,7 +3,7 @@ import axios from 'axios';
 import './App.css';
 import paperclipIcon from './paperclip.png';
 import sendIcon from './send.png';
-import userIcon from './user.png';
+// import userIcon from './user.png';
 
 const BOT_WELCOME = {
   text: "Hello! I'm KareerBot, your personal career assistant. You can either type or paste your resume into the box below, or upload a document to get started.",

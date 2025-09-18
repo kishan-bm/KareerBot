@@ -7,6 +7,7 @@ import userIcon from './user.png';
 export default function App() {
   const [currentPage, setCurrentPage] = useState('resumeBot');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [agentPurchased, setAgentPurchased] = useState(false); // New global state
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -41,7 +42,14 @@ export default function App() {
       </div>
       
       <div className="main-content-pane">
-        {currentPage === 'resumeBot' ? <ResumeBotPage onSidebarToggle={toggleSidebar} /> : <AgentPage />}
+        {currentPage === 'resumeBot' ? (
+          <ResumeBotPage onSidebarToggle={toggleSidebar} />
+        ) : (
+          <AgentPage 
+            agentPurchased={agentPurchased} 
+            setAgentPurchased={setAgentPurchased} 
+          />
+        )}
       </div>
 
       <nav className="bottom-nav">

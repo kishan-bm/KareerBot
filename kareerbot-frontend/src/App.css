@@ -617,6 +617,7 @@ body, html, #root {
   align-items: center;
   padding: 20px;
   overflow: hidden;
+  margin-bottom: 50px;
 }
 
 /* --- Chat Window Styles (Resume Bot) --- */
@@ -1123,4 +1124,27 @@ body, html, #root {
 
 .bottom-nav button.active {
   background-color: #257341;
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #e4ece7;
+  color: black;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.send-btn img {
+  width: 22px; /* Correctly sizes the image */
+  height: 22px;
+}
+
+.send-btn:hover:not(:disabled) {
+  background-color: #d1d9d4; /* A lighter hover color */
 }
