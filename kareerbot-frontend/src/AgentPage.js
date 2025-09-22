@@ -131,7 +131,7 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
             )}
         </div>
     );
-    
+
 }
 
 const ChatPage = () => {
