@@ -137,6 +137,7 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
 const ChatPage = () => {
     // Note: The ChatPage component is not used in the final version of this code.
     // The chat logic is rendered directly in the switch statement above.
+
     return (
         <div>
             <h2>Chat Page</h2>
@@ -144,3 +145,4 @@ const ChatPage = () => {
         </div>
     );
 };
+
