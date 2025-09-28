@@ -192,3 +192,107 @@
   text-align: center;
   padding: 20px;
 }
+
+/* --- Dashboard Header and Back Button --- */
+.agent-dashboard-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.dashboard-title {
+    flex-grow: 1;
+    text-align: center;
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.back-to-hub-button {
+    background: #f0f2f5;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #555;
+    transition: background-color 0.2s;
+}
+
+/* --- Agent Start Screen (The Bubble Grid) --- */
+.agent-feature-grid-v2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 10px;
+    width: 700px;
+    max-width: 90vw;
+    height: 600px;
+    position: relative;
+}
+
+.feature-bubble {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #f44336; /* Red color */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s, background-color 0.3s;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.feature-bubble:hover {
+    transform: scale(1.1);
+    background-color: #d32f2f;
+}
+
+/* Positioning the bubbles using grid area names (Conceptual Positioning) */
+.center-chat-bubble {
+    grid-column: 2;
+    grid-row: 2;
+    background-color: #000; /* Black/Dark Color */
+    border: 3px solid #257341;
+}
+
+.top-center-v2 {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    justify-self: center;
+    background-color: #ff9800;
+}
+
+.right-center-v2 {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: center;
+    justify-self: start;
+    background-color: #f44336;
+}
+
+.bottom-left-v2 {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    justify-self: end;
+    background-color: #00bcd4;
+}
+
+.bottom-right-v2 {
+    grid-column: 3;
+    grid-row: 3;
+    align-self: start;
+    justify-self: start;
+    background-color: #4caf50;
+}

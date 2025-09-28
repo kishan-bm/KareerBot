@@ -2,29 +2,49 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './AgentPage.css';
 import AgentLandingPage from './AgentLandingPage';
+import AgentDashboardHub from './AgentDashboardHub';
 import sendIcon from './send.png';
+
+// --- Placeholder Components for Dashboard Tabs ---
+const GoalTrackingPage = () => <div className="agent-content-page"><h2>MyGoal/Path</h2><p>This is where the agent will display your full plan flow.</p></div>;
+const JobsPage = () => <div className="agent-content-page"><h2>Jobs Dashboard</h2><p>The agent will list recommended jobs and track applications here.</p></div>;
+const StatisticsPage = () => <div className="agent-content-page"><h2>Statistics</h2><p>This page will show success prediction and streaks.</p></div>;
+const TutorialsPage = () => <div className="agent-content-page"><h2>Tutorials & Resources</h2><p>The agent will curate learning resources for your current step.</p></div>;
 
 const AGENT_WELCOME = {
   text: "Hello! I am your AI Agent. I can help you with career plans, business ideas, and more. Feel free to ask me anything. For example, 'Find the latest trends in AI.'",
   sender: "bot",
 };
 
-// Placeholder components for new pages
-const GoalTrackingPage = () => <div className="agent-content-page"><h2>Goal Tracking</h2><p>This is where you will visually track your progress towards a goal.</p></div>;
-const NotesPage = () => <div className="agent-content-page"><h2>Notes</h2><p>A simple page to keep your thoughts and notes.</p></div>;
-const TutorialsPage = () => <div className="agent-content-page"><h2>Tutorials</h2><p>Your AI agent will find the best learning resources for you here.</p></div>;
-
+// --- The Main Agent Page Component ---
 export default function AgentPage({ agentPurchased, setAgentPurchased }) {
-    const [currentTab, setCurrentTab] = useState('chat'); // New state for tabs
+    // viewState tracks the currently active page: 'landing', 'hub', 'chat', 'myGoal', etc.
+    const [viewState, setViewState] = useState(agentPurchased ? 'hub' : 'landing'); 
     const [loading, setLoading] = useState(false);
     const [chatInput, setChatInput] = useState("");
     const [chatHistory, setChatHistory] = useState([AGENT_WELCOME]);
     const [persona, setPersona] = useState("a professional career coach");
     const chatEndRef = useRef(null);
+    
+    // Function to handle returning to the HUB view
+    const handleGoToHub = () => {
+        setViewState('hub');
+    };
 
+    // Effect to scroll the chat
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [chatHistory]);
+        if (viewState === 'chat') {
+             chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatHistory, viewState]);
+
+    const handlePurchase = () => {
+        // Simulates payment success and moves to the dashboard hub
+        setAgentPurchased(true); 
+        setViewState('hub');
+        // Reset chat history for the new paid session
+        setChatHistory([AGENT_WELCOME]); 
+    };
 
     const handleChatSubmit = async (e) => {
         e.preventDefault();
@@ -51,98 +71,179 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
             setLoading(false);
         }
     };
-    
-    const handlePurchase = () => {
-      setAgentPurchased(true);
-      setChatHistory([AGENT_WELCOME]);
-    };
 
-    const renderPage = () => {
-        switch (currentTab) {
-            case 'chat':
-                return (
-                    <>
-                        <div className="agent-messages-container">
-                            <div className="agent-persona-selector">
-                                <label htmlFor="persona-select">Select Agent Persona:</label>
-                                <select id="persona-select" value={persona} onChange={(e) => setPersona(e.target.value)}>
-                                    <option value="a professional career coach">Career Coach</option>
-                                    <option value="a creative writing expert">Creative Writing Expert</option>
-                                    <option value="a business strategist">Business Strategist</option>
-                                    <option value="a technical architect">Technical Architect</option>
-                                </select>
-                            </div>
-                            {chatHistory.map((msg, index) => (
-                                <div key={index} className={`agent-message ${msg.sender}`}>
-                                    <div className="agent-message-content">
-                                        {msg.text}
-                                    </div>
-                                </div>
-                            ))}
-                            {loading && (
-                                <div className="agent-message bot">
-                                    <div className="typing-indicator">
-                                        <span></span><span></span><span></span>
-                                    </div>
-                                </div>
-                            )}
-                            <div ref={chatEndRef} />
+    // --- Renderers for the three main UI states ---
+
+    const renderChatInterface = () => (
+        <>
+            <div className="agent-messages-container">
+                <div className="agent-persona-selector">
+                    <label htmlFor="persona-select">Select Agent Persona:</label>
+                    <select id="persona-select" value={persona} onChange={(e) => setPersona(e.target.value)}>
+                        <option value="a professional career coach">Career Coach</option>
+                        <option value="a creative writing expert">Creative Writing Expert</option>
+                        <option value="a business strategist">Business Strategist</option>
+                        <option value="a technical architect">Technical Architect</option>
+                    </select>
+                </div>
+                {chatHistory.map((msg, index) => (
+                    <div key={index} className={`agent-message ${msg.sender}`}>
+                        <div className="agent-message-content">
+                            {msg.text}
                         </div>
-                        <form onSubmit={handleChatSubmit} className="agent-input-form">
-                            <input
-                                type="text"
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                placeholder="Ask your agent a question..."
-                                className="agent-input-field"
-                                disabled={loading}
-                            />
-                            <button type="submit" disabled={loading} className="agent-send-button">
-                                <img src={sendIcon} alt="Send" />
-                            </button>
-                        </form>
-                    </>
-                );
-            case 'goalTracking':
+                    </div>
+                ))}
+                {loading && (
+                    <div className="agent-message bot">
+                        <div className="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                )}
+                <div ref={chatEndRef} />
+            </div>
+            <form onSubmit={handleChatSubmit} className="agent-input-form">
+                <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask your agent a question..."
+                    className="agent-input-field"
+                    disabled={loading}
+                />
+                <button type="submit" disabled={loading} className="agent-send-button">
+                    <img src={sendIcon} alt="Send" />
+                </button>
+            </form>
+        </>
+    );
+
+    const renderCurrentView = () => {
+        switch (viewState) {
+            case 'landing':
+                return <AgentLandingPage onPurchase={handlePurchase} />;
+            case 'hub':
+                // Pass the setViewState function to the hub to enable navigation
+                return <AgentDashboardHub setActiveView={setViewState} />;
+            case 'chat':
+                return renderChatInterface();
+            case 'myGoal':
                 return <GoalTrackingPage />;
-            case 'notes':
-                return <NotesPage />;
+            case 'jobs':
+                return <JobsPage />;
+            case 'statistics':
+                return <StatisticsPage />;
             case 'tutorials':
                 return <TutorialsPage />;
             default:
-                return null;
+                return renderChatInterface();
         }
     };
 
+    // --- Main Render Block ---
     return (
         <div className="agent-page-container">
-            {agentPurchased ? (
-                <>
-                    <nav className="agent-tab-nav">
-                        <button className={currentTab === 'chat' ? 'active' : ''} onClick={() => setCurrentTab('chat')}>Chat</button>
-                        <button className={currentTab === 'goalTracking' ? 'active' : ''} onClick={() => setCurrentTab('goalTracking')}>Goal Tracking</button>
-                        <button className={currentTab === 'notes' ? 'active' : ''} onClick={() => setCurrentTab('notes')}>Notes</button>
-                        <button className={currentTab === 'tutorials' ? 'active' : ''} onClick={() => setCurrentTab('tutorials')}>Tutorials</button>
-                    </nav>
-                    {renderPage()}
-                </>
+            {/* The main dashboard container is only rendered if the view is not the landing page */}
+            {viewState !== 'landing' ? (
+                <div className="agent-full-dashboard">
+                    <div className="agent-dashboard-header">
+                        {/* The logic for the back button and returning to the hub */}
+                        {viewState !== 'hub' && (
+                            <button onClick={handleGoToHub} className="back-to-hub-button">
+                                &larr; Back to Dashboard
+                            </button>
+                        )}
+                        <h2 className="dashboard-title">
+                             {/* Display the current view name */}
+                             {viewState === 'hub' ? 'Your AI Dashboard' : viewState.charAt(0).toUpperCase() + viewState.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+                        </h2>
+                    </div>
+                    <div className="agent-view-content">
+                        {renderCurrentView()}
+                    </div>
+                </div>
             ) : (
-                <AgentLandingPage onPurchase={handlePurchase} />
+                 // Render only the Landing Page if not purchased
+                renderCurrentView()
             )}
         </div>
     );
-
 }
 
-const ChatPage = () => {
-    // Note: The ChatPage component is not used in the final version of this code.
-    // The chat logic is rendered directly in the switch statement above.
 
-    return (
-        <div>
-            <h2>Chat Page</h2>
-            <p>This is the chat page content.</p>
-        </div>
-    );
-};
 
+
+
+
+
+
+// import React, { useState } from 'react';
+// import AgentLandingPage from './AgentLandingPage';
+// import AgentDashboardHub from './AgentDashboardHub';
+// import AgentChatInterface from './AgentChatInterface'; // New component for chat/input
+// import './AgentPage.css';
+
+// // Placeholder components (You must create these files if you haven't yet)
+// const GoalTrackingPage = () => <div className="agent-content-page"><h2>MyGoal/Path</h2><p>This is where the agent will display your full plan flow.</p></div>;
+// const JobsPage = () => <div className="agent-content-page"><h2>Jobs Dashboard</h2><p>The agent will list recommended jobs and track applications here.</p></div>;
+// const StatisticsPage = () => <div className="agent-content-page"><h2>Statistics</h2><p>This page will show success prediction and streaks.</p></div>;
+// const TutorialsPage = () => <div className="agent-content-page"><h2>Tutorials & Resources</h2><p>The agent will curate learning resources for your current step.</p></div>;
+
+// export default function AgentPage({ agentPurchased, setAgentPurchased }) {
+//     // State management for the 3 main views within the purchased agent area
+//     const [viewState, setViewState] = useState('hub'); // 'hub', 'chat', 'myGoal', 'jobs', 'statistics', 'tutorials'
+    
+//     const handlePurchase = () => {
+//         // Simulates payment success and moves to the dashboard hub
+//         setAgentPurchased(true); 
+//         setViewState('hub');
+//     };
+
+//     const renderMainContent = () => {
+//         switch (viewState) {
+//             case 'hub':
+//                 // The main interactive bubble grid
+//                 return <AgentDashboardHub setActiveView={setViewState} />;
+//             case 'chat':
+//                 // The main chat window
+//                 return <AgentChatInterface setActiveView={setViewState} />; 
+//             case 'myGoal':
+//                 return <GoalTrackingPage setActiveView={setViewState} />;
+//             case 'jobs':
+//                 return <JobsPage setActiveView={setViewState} />;
+//             case 'statistics':
+//                 return <StatisticsPage setActiveView={setViewState} />;
+//             case 'tutorials':
+//                 return <TutorialsPage setActiveView={setViewState} />;
+//             default:
+//                 return <AgentDashboardHub setActiveView={setViewState} />;
+//         }
+//     };
+
+//     return (
+//         <div className="agent-page-container">
+//             {agentPurchased ? (
+//                 // Purchased State: Show Dashboard/Hub
+//                 <div className="agent-full-dashboard">
+//                     <div className="agent-dashboard-header">
+//                         {/* Back button logic */}
+//                         {viewState !== 'hub' && (
+//                             <button onClick={() => setViewState('hub')} className="back-to-hub-button">
+//                                 &larr; Back to Hub
+//                             </button>
+//                         )}
+//                         <h2 className="dashboard-title">
+//                             {viewState === 'hub' ? 'Your AI Dashboard' : viewState.charAt(0).toUpperCase() + viewState.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+//                         </h2>
+//                     </div>
+//                     <div className="agent-view-content">
+//                         {renderMainContent()}
+//                     </div>
+//                 </div>
+//             ) : (
+//                 // Pre-Purchase State: Show Landing Page
+//                 <AgentLandingPage onPurchase={handlePurchase} />
+//             )}
+//         </div>
+//     );
+// }
