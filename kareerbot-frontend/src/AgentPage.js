@@ -171,12 +171,6 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
 }
 
 
-
-
-
-
-
-
 // import React, { useState } from 'react';
 // import AgentLandingPage from './AgentLandingPage';
 // import AgentDashboardHub from './AgentDashboardHub';
