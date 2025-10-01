@@ -13,13 +13,21 @@
   width: 100vw;
   overflow: hidden;
 }
+*/
+
+:root {
+    --color-accent-blue: #00bcd4; 
+    --color-sidebar-bg: #1e293b;
+    --color-border-subtle: rgba(255, 255, 255, 0.1);
+    --color-top-nav-text: #e2e8f0;
+}
 
 /* --- Chat Window Styles --- */
 .chat-window {
   display: flex;
   flex-direction: column; /* This stacks the header, messages, and input vertically */
   flex: 1; /* This tells the chat window to take up all available horizontal space */
-  background: #fff;
+  background: #1e293b;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   /* margin: 20px; */
@@ -527,10 +535,11 @@
 
 /* Update main app-container margin to make space for the nav bar */
 .app-container {
-  display: flex; /* This makes the sidebar and chat window a flexible row */
-  height: 100vh; /* This forces the app to take up the full height of the viewport */
-  width: 100vw;
-  overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Stack top-nav and main-content vertically */
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
 }
 
 /* --- Agent Page Styling (for the placeholder) --- */
@@ -612,12 +621,14 @@ body, html, #root {
 
 .main-content-pane {
   display: flex;
-  flex: 1; /* This is the key fix: it tells this container to grow and take up all available space */
+  /* flex: 1; This is the key fix: it tells this container to grow and take up all available space */
   justify-content: center;
   align-items: center;
   padding: 20px;
   overflow: hidden;
-  margin-bottom: 50px;
+  margin-bottom: 0px;
+  flex-grow: 1;
+  /* margin-top: 40px; */
 }
 
 /* --- Chat Window Styles (Resume Bot) --- */
@@ -1091,39 +1102,72 @@ body, html, #root {
   }
 }
 
-/* --- New Navigation Bar --- */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  background-color: #2c3e50;
-  padding: 10px 0;
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-  z-index: 99;
+/* 3. NEW TOP NAVIGATION STYLING (Replaces .bottom-nav) */
+.top-nav-app {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--color-sidebar-bg); /* Use sidebar color for continuity */
+    border-bottom: 1px solid var(--color-border-subtle);
+    z-index: 100;
 }
 
-.bottom-nav button {
-  background: none;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-size: 16px;
-  font-weight: bold;
+.top-nav-buttons {
+    display: flex;
+    gap: 15px;
 }
 
-.bottom-nav button:hover {
-  background-color: #3b5066;
+.top-nav-btn {
+    background: none;
+    border: none;
+    /* color: var(--color-top-nav-text); */
+    color: #00bcd4;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 500;
 }
 
-.bottom-nav button.active {
-  background-color: #257341;
+.top-nav-btn:hover:not(.active) {
+    background-color: rgba(134, 136, 136, 0.323);
+    /* box-shadow: 0 0 1px rgba(85, 197, 175, 0.6), inset 0 0 20px rgba(85, 197, 175, 0.6); */
+
+}
+
+.top-nav-btn:not(.active){
+  background-color: rgba(246, 248, 248, 0.1);
+  
+}
+
+.top-nav-btn.active {
+    /* background-color: var(--color-accent-blue); */
+    color: #56d9e0; /* Dark text on bright button */
+    font-weight: 550;
+    box-shadow: 0 0 0px rgba(85, 197, 175, 0.6), inset 0 0 33px rgba(85, 197, 175, 0.6);
+
+}
+
+
+.top-nav-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.top-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    /* Filter to make the icons greyish/white, matching the image */
+    filter: invert(70%) brightness(1.5) opacity(0.7); 
+    transition: opacity 0.2s, filter 0.2s;
+}
+
+.top-icon:hover {
+    opacity: 1;
+    filter: invert(100%); /* White on hover */
 }
 
 .send-btn {

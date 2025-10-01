@@ -8,6 +8,8 @@ import ChatIcon from './chat-icon.png';
 import JobsIcon from './jobs-icon.png';
 import StatisticsIcon from './statistics-icon.png';
 import TutorialsIcon from './tutorials-icon.png';
+import NotificationIcon from './icons/notification-icon.png'; // Make sure you have these icons
+import ProfileIcon from './icons/profile-icon.png';
 
 
 // --- Placeholder Components for Dashboard Tabs ---
@@ -313,13 +315,12 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
                 </div>
             </div>
             <div className="dashboard-main-content">
-                <header className="main-content-header">
-                    {/* Placeholder for header elements like notifications/profile */}
+                {/* <header className="main-content-header">
                     <div className="header-icons">
-                        {/* <img src={NotificationIcon} alt="Notifications" className="header-icon" /> */}
-                        {/* <img src={ProfileIcon} alt="Profile" className="header-icon" /> */}
+                        <img src={NotificationIcon} alt="Notifications" className="header-icon" /> 
+                        <img src={ProfileIcon} alt="Profile" className="header-icon" />
                     </div>
-                </header>
+                </header> */}
                 <div className="content-area">
                     {renderContent()}
                 </div>
