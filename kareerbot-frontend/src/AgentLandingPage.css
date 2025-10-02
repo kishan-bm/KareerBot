@@ -1,0 +1,162 @@
+/* --- VARIABLES --- */
+/* Ensure these variables match the ones defined in your App.css or AgentPage.css */
+:root {
+    --color-bg-dark: #1a202c; /* Deep Charcoal/Navy */
+    --color-bg-card-main: rgba(30, 41, 59, 0.75); /* Translucent dark background for main card */
+    --color-text-light: #00bcd4; /* Off-white text */
+    --color-accent-blue: #00bcd4; /* Vibrant Teal/Cyan - Primary accent */
+    --color-accent-hover: #00e0f0; /* Brighter accent for hover/glow */
+    --color-text-inactive: #a0aec0; /* Subtle grey for inactive text */
+}
+
+/* --- LANDING PAGE CONTAINER --- */
+.agent-landing-page-container {
+    /* Ensures the card is centered within the main content area */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+}
+
+/* --- MAIN CARD STYLING --- */
+.agent-landing-card {
+    background-color: var(--color-bg-card-main); /* Translucent Card Background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    border: 1px solid var(--color-accent-blue); /* Outer border */
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    /* Strong Blue/Teal Glow for the Premium look */
+    box-shadow: 0 0 30px rgba(0, 188, 212, 0.4), 
+                inset 0 0 10px rgba(0, 188, 212, 0.2); 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px; 
+}
+
+/* --- HEADER AND SUBTITLE --- */
+.landing-title {
+    font-size: 2.2rem;
+    color: var(--color-text-light);
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.landing-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-inactive);
+    margin-bottom: 30px;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* --- FEATURE GRID --- */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Three equal columns */
+    gap: 25px; 
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.feature-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 25px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.feature-item:hover {
+    background-color: rgba(0, 188, 212, 0.1); /* Teal tint on hover */
+    border-color: var(--color-accent-blue); /* Blue border on hover */
+    transform: translateY(-5px); /* Lift effect */
+    box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3); /* Enhanced shadow */
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    /* Filter to make icons teal/blue */
+    filter: invert(40%) sepia(80%) saturate(1500%) hue-rotate(150deg) brightness(1.2); 
+    transition: filter 0.3s ease;
+}
+
+.feature-item:hover .feature-icon {
+    /* Make icon white on hover */
+    filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(0deg) brightness(100%); 
+}
+
+.feature-name {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+/* --- CALL TO ACTION BUTTON --- */
+.purchase-button {
+    padding: 15px 40px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--color-accent-blue);
+    color: var(--color-bg-dark); 
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    box-shadow: 0 0 20px rgba(0, 188, 212, 0.6); /* Strong glow */
+}
+
+.purchase-button:hover {
+    background-color: var(--color-accent-hover);
+    box-shadow: 0 0 30px rgba(0, 188, 212, 0.9); /* More intense glow */
+    transform: translateY(-2px);
+}
+
+.landing-footer-text {
+    font-size: 0.95rem;
+    color: var(--color-text-inactive);
+    margin-top: 20px;
+}
+
+/* --- MEDIA QUERIES --- */
+@media (max-width: 900px) {
+    .feature-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+        gap: 20px;
+    }
+    .agent-landing-card {
+        padding: 30px;
+    }
+    .landing-title {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .feature-grid {
+        grid-template-columns: 1fr; /* Single column on very small screens */
+    }
+    .agent-landing-card {
+        padding: 20px;
+        max-width: 95%;
+    }
+    .landing-title {
+        font-size: 1.5rem;
+        color: #00bcd4;
+    }
+    .purchase-button {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
+}
