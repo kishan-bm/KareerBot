@@ -2,6 +2,7 @@
 :root {
     --color-bg-dark: #1a202c; /* Deep Charcoal/Navy */
     --color-bg-card-main: rgba(30, 41, 59, 0.75); /* Translucent dark background for main card */
+    --color-bg-card-detail: rgba(30, 41, 59, 0.9); /* Slightly less translucent */
     --color-text-light: #e2e8f0; /* Off-white text */
     --color-text-inactive: #a0aec0; /* Subtle grey for inactive text */
     --color-accent-blue: #00bcd4; /* Vibrant Teal/Cyan - Primary accent */
@@ -9,15 +10,55 @@
     --color-border-subtle: rgba(255, 255, 255, 0.1); /* Light border/separator */
 }
 
-/* --- PAYMENT PAGE CONTAINER --- */
+/* -------------------------------------------------------------------
+ * 1. MAIN LAYOUT AND ANIMATION
+ * ------------------------------------------------------------------- */
+
 .payment-page-container {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 100%;
+    height: 100vh; 
     padding: 20px;
+    gap: 50px;
+
+    position: fixed; 
+    top: 0;
+    left: 0;
+    background-color: var(--color-bg-dark); 
+    z-index: 1000; 
+    overflow-y: hidden; 
 }
+
+/* --- MAIN CARD WRAPPER & SHIFT ANIMATION --- */
+.payment-card-wrapper {
+    width: 100%;
+    /* 🎯 CHANGE: Larger default max-width for the single card view */
+    max-width: 650px; /* Was 500px, now closer to the combined width */
+    transition: max-width 0.4s ease;
+    flex-shrink: 0; 
+}
+
+/* 🎯 NEW RULE: Centering for the single card state */
+/* This will only apply when .shifted is NOT present, effectively centering the single card */
+.payment-page-container:not(.shifted) > .payment-card-wrapper {
+    margin: 100px; /* Overrides flex centering when it's the only item */
+}
+
+
+.payment-card-wrapper.shifted {
+    /* 🎯 CHANGE: When shifted, it reduces, but still looks good next to the panel */
+    max-width: 650px; /* Slightly larger than before, if needed, adjust */
+    /* Add transform to explicitly push it left, making room */
+    transform: translateX(-90px); /* Adjust this value as needed to align */
+    max-height: 650px;
+}
+/* If the above transform causes issues, try making this just max-width and let flexbox handle it */
+/* .payment-card-wrapper.shifted {
+    max-width: 450px; 
+} */
+
 
 /* --- MAIN PAYMENT CARD --- */
 .payment-card {
@@ -25,19 +66,69 @@
     backdrop-filter: blur(10px);
     border: 1px solid var(--color-accent-blue);
     border-radius: 12px;
-    padding: 40px;
+    padding: 35px; 
     text-align: center;
-    max-width: 700px; /* Slightly narrower than landing page card */
     width: 100%;
+    height: auto; 
+    min-height: 500px; 
     box-shadow: 0 0 30px rgba(0, 188, 212, 0.4), 
                 inset 0 0 10px rgba(0, 188, 212, 0.2); 
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px; /* Space between sections */
-    margin-top: 150px;
-    margin-bottom: 150px;
+    gap: 1px; 
 }
+
+/* --- DETAIL PANEL WRAPPER & STYLING (The right-hand card) --- */
+.detail-panel-wrapper {
+    width: 100%;
+    max-width: 300px; 
+    height: auto; 
+    min-height: 500px; 
+    animation: fadeInSlideRight 0.4s ease-out; 
+    flex-shrink: 0; 
+    /* 🎯 NEW RULE: To align with the shifted main card */
+    transform: translateX(-110px); /* Same transform as main card for alignment */
+    /* If the above transform causes issues, try making this just max-width and let flexbox handle it */
+    /* transform: none; */
+}
+
+
+.detail-panel {
+    background-color: var(--color-bg-card-detail);
+    border: 1px solid var(--color-accent-blue);
+    border-radius: 12px;
+    padding: 25px;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 20px rgba(0, 188, 212, 0.3);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-title {
+    font-size: 1.4rem;
+    color: var(--color-text-light);
+    margin-bottom: 5px;
+}
+
+.detail-subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-inactive);
+    margin-bottom: 10px;
+}
+
+/* 🎯 NEW ANIMATION for detail panel */
+@keyframes fadeInSlideRight {
+    from { opacity: 0; transform: translateX(200px); } /* Start further right */
+    to { opacity: 1; transform: translateX(-150px); } /* End at the same shifted position as main card */
+}
+
+/* -------------------------------------------------------------------
+ * 2. ORDER SUMMARY & OPTIONS (Retained/Refined)
+ * ------------------------------------------------------------------- */
 
 .payment-title {
     font-size: 2rem;
@@ -49,15 +140,13 @@
 .payment-subtitle {
     font-size: 1rem;
     color: var(--color-text-inactive);
-    margin-bottom: 20px;
     line-height: 1.5;
 }
 
-/* --- ORDER SUMMARY SECTION --- */
 .order-summary-section {
     width: 100%;
     text-align: left;
-    background-color: rgba(255, 255, 255, 0.05); /* Subtle background for this section */
+    background-color: rgba(255, 255, 255, 0.05); 
     border-radius: 8px;
     padding: 20px;
 }
@@ -67,7 +156,7 @@
     color: var(--color-text-light);
     margin-bottom: 15px;
     font-weight: 600;
-    border-bottom: 1px solid var(--color-border-subtle); /* Separator line */
+    border-bottom: 1px solid var(--color-border-subtle); 
     padding-bottom: 10px;
 }
 
@@ -86,14 +175,13 @@
     color: var(--color-accent-blue);
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px dashed var(--color-border-subtle); /* Dashed line for total */
+    border-top: 1px dashed var(--color-border-subtle); 
 }
 
 .item-price, .total-amount {
     color: var(--color-text-light);
 }
 
-/* --- PAYMENT OPTIONS SECTION --- */
 .payment-options-section {
     width: 100%;
     text-align: left;
@@ -101,7 +189,7 @@
 
 .options-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Three equal columns */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 20px;
     margin-top: 15px;
 }
@@ -123,38 +211,167 @@
 }
 
 .payment-option-btn:hover:not(.active) {
-    background-color: rgba(0, 188, 212, 0.15); /* Light blue tint on hover */
+    background-color: rgba(0, 188, 212, 0.15); 
     border-color: var(--color-accent-blue);
     color: var(--color-text-light);
 }
 
+/* ACTIVE STATE for button when detail panel is open */
 .payment-option-btn.active {
-    background-color: var(--color-accent-blue);
-    color: var(--color-bg-dark); /* Dark text on active button */
+    background-color: rgba(0, 188, 212, 0.15); /* Keep background subtle, not solid blue */
+    color: var(--color-accent-blue); /* Highlight text */
     border-color: var(--color-accent-blue);
-    box-shadow: 0 0 15px rgba(0, 188, 212, 0.6); /* Glow on active */
+    box-shadow: 0 0 15px rgba(0, 188, 212, 0.6); 
 }
 
 .option-icon {
     width: 40px;
     height: 40px;
-    /* Filter to make icons subtle grey by default */
     filter: invert(50%) brightness(1.8); 
     transition: filter 0.3s ease;
 }
 
 .payment-option-btn.active .option-icon {
-    /* Filter to make icons dark on active blue button */
-    filter: invert(0%) brightness(0.2); 
+    /* Make active icon blue/teal */
+    filter: invert(40%) sepia(80%) saturate(1500%) hue-rotate(150deg) brightness(1.2);
 }
 
 .payment-option-btn:hover:not(.active) .option-icon {
-     /* Make icon white on hover */
     filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(0deg) brightness(100%); 
 }
 
 
-/* --- CONFIRM BUTTON --- */
+/* --- SECURE PAYMENT INFO --- */
+.secure-payment-info {
+    font-size: 0.85rem;
+    color: var(--color-text-inactive);
+    margin-top: 20px; 
+    margin-bottom: 0px;
+}
+
+.secure-payment-info span {
+    font-weight: 600;
+    color: var(--color-accent-blue);
+}
+
+/* -------------------------------------------------------------------
+ * 3. UPI DETAIL PANEL SPECIFIC STYLES
+ * ------------------------------------------------------------------- */
+
+.upi-id-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.upi-id-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--color-border-subtle);
+}
+
+.upi-id-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    flex-grow: 1; 
+}
+
+.upi-name {
+    font-size: 0.8rem;
+    color: var(--color-accent-blue);
+    font-weight: 600;
+}
+
+.upi-id {
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    word-break: break-all;
+}
+
+.copy-btn {
+    background: none;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background-color: rgba(0, 188, 212, 0.2);
+    border-color: var(--color-accent-blue);
+}
+
+.copy-icon {
+    width: 18px;
+    height: 18px;
+    filter: invert(70%) sepia(80%) saturate(1500%) hue-rotate(150deg) brightness(1.2);
+    transition: filter 0.2s;
+}
+
+
+/* --- UPLOAD SECTION STYLES --- */
+.upload-section {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    width: 100%;
+    border: 2px dashed var(--color-accent-blue);
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: rgba(0, 188, 212, 0.05);
+    transition: all 0.3s ease;
+    padding: 10px;
+    text-align: center;
+}
+
+.upload-label:hover {
+    background-color: rgba(0, 188, 212, 0.15);
+    border-style: solid;
+}
+
+.upload-label.uploaded {
+    border-style: solid;
+    border-color: #48bb78; 
+    background-color: rgba(72, 187, 120, 0.1);
+}
+
+.upload-icon-lg {
+    width: 35px;
+    height: 35px;
+    filter: invert(40%) sepia(80%) saturate(1500%) hue-rotate(150deg) brightness(1.2);
+    margin-bottom: 5px;
+}
+
+.upload-label.uploaded .upload-icon-lg {
+    filter: invert(60%) sepia(80%) saturate(1500%) hue-rotate(80deg) brightness(1.2); 
+}
+
+.upload-text {
+    font-size: 0.9rem;
+    color: var(--color-text-inactive);
+    line-height: 1.3;
+}
+
+.upload-label.uploaded .upload-text {
+    color: var(--color-text-light);
+}
+
+
+/* --- CONFIRM BUTTON (Used by UPI Panel) --- */
 .confirm-payment-btn {
     padding: 15px 40px;
     border: none;
@@ -165,68 +382,75 @@
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
-    box-shadow: 0 0 20px rgba(0, 188, 212, 0.6); /* Strong glow */
-    margin-top: 20px; /* Space from options */
+    box-shadow: 0 0 20px rgba(0, 188, 212, 0.6); 
 }
 
-.confirm-payment-btn:hover {
+/* Detail panel button specific styles */
+.detail-confirm-btn {
+    margin-top: auto; 
+    width: 100%;
+}
+
+.confirm-payment-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.confirm-payment-btn:hover:not(:disabled) {
     background-color: var(--color-accent-hover);
     box-shadow: 0 0 30px rgba(0, 188, 212, 0.9);
     transform: translateY(-2px);
 }
 
-/* --- SECURE PAYMENT INFO --- */
-.secure-payment-info {
-    font-size: 0.85rem;
-    color: var(--color-text-inactive);
-    margin-top: 20px;
-}
 
-.secure-payment-info span {
-    font-weight: 600;
-    color: var(--color-accent-blue);
-}
+/* -------------------------------------------------------------------
+ * 4. MEDIA QUERIES (Updated for new layout)
+ * ------------------------------------------------------------------- */
 
-/* --- MEDIA QUERIES FOR RESPONSIVENESS --- */
-@media (max-width: 768px) {
+@media (max-width: 950px) {
+    .payment-page-container {
+        flex-direction: column; 
+        height: auto; 
+        padding-top: 50px; 
+        padding-bottom: 50px;
+        position: absolute; 
+    }
+    .payment-card-wrapper, .payment-card-wrapper.shifted {
+        max-width: 95%; 
+        transform: none; 
+    }
+    .detail-panel-wrapper {
+        max-width: 95%; 
+        min-height: auto; 
+        animation: none; 
+        margin-top: 20px; 
+        transform: none; /* Reset transform for stacked layout */
+    }
+    /* Reset keyframe for smaller screens */
+    @keyframes fadeInSlideRight {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
     .payment-card {
         padding: 30px;
-        max-width: 95%;
-    }
-    .payment-title {
-        font-size: 1.7rem;
-    }
-    .payment-subtitle {
-        font-size: 0.9rem;
-    }
-    .options-grid {
-        grid-template-columns: repeat(2, 1fr); /* Two columns on smaller screens */
-    }
-    .payment-option-btn {
-        padding: 15px 10px;
-        font-size: 0.85rem;
-    }
-    .confirm-payment-btn {
-        padding: 12px 30px;
-        font-size: 1rem;
     }
 }
 
-@media (max-width: 480px) {
-    .payment-card {
+@media (max-width: 600px) {
+    .options-grid {
+        grid-template-columns: 1fr; 
+    }
+    .payment-card, .detail-panel {
         padding: 20px;
     }
     .payment-title {
         font-size: 1.5rem;
     }
-    .section-title {
-        font-size: 1rem;
+    .detail-title {
+        font-size: 1.2rem;
     }
-    .options-grid {
-        grid-template-columns: 1fr; /* Single column on very small screens */
-    }
-    .option-icon {
-        width: 30px;
-        height: 30px;
+    .upload-label {
+        height: 100px;
     }
 }

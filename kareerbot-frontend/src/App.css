@@ -1192,3 +1192,8 @@ body, html, #root {
 .send-btn:hover:not(:disabled) {
   background-color: #d1d9d4; /* A lighter hover color */
 }
+
+/* Add this to a global CSS file or conditional body class */
+body.modal-open {
+    overflow: hidden; /* Prevents scrolling on the background content */
+}
