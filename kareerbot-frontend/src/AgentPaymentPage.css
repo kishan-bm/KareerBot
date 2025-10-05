@@ -22,7 +22,7 @@
     height: 100vh; 
     padding: 20px;
     gap: 50px;
-
+    min-height: 100vh;
     position: fixed; 
     top: 0;
     left: 0;
@@ -38,6 +38,7 @@
     max-width: 650px; /* Was 500px, now closer to the combined width */
     transition: max-width 0.4s ease;
     flex-shrink: 0; 
+    /* height: 90vh; */
 }
 
 /* 🎯 NEW RULE: Centering for the single card state */
@@ -81,9 +82,10 @@
 
 /* --- DETAIL PANEL WRAPPER & STYLING (The right-hand card) --- */
 .detail-panel-wrapper {
+    flex-grow: 1;
     width: 100%;
     max-width: 300px; 
-    height: auto; 
+    /* height: auto;  */
     min-height: 500px; 
     animation: fadeInSlideRight 0.4s ease-out; 
     flex-shrink: 0; 
@@ -320,6 +322,7 @@
 .upload-section {
     width: 100%;
     margin-top: 10px;
+    
 }
 
 .upload-label {
@@ -327,14 +330,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 120px;
+    height: 100px;
     width: 100%;
     border: 2px dashed var(--color-accent-blue);
     border-radius: 8px;
     cursor: pointer;
     background-color: rgba(0, 188, 212, 0.05);
     transition: all 0.3s ease;
-    padding: 10px;
+    /* padding: 10px; */
     text-align: center;
 }
 
@@ -453,4 +456,278 @@
     .upload-label {
         height: 100px;
     }
+}
+
+/* -------------------------------------------------------------------
+ * NEW SECTION: QR CODE LIST STYLES (for Scanner Payment)
+ * ------------------------------------------------------------------- */
+
+.qr-code-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0px 0;
+    /* margin-bottom: 20px; */
+}
+
+.qr-option-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.active-qr-option {
+    border-color: var(--color-accent-blue);
+    background-color: rgba(0, 188, 212, 0.2);
+}
+
+.qr-arrow {
+    color: var(--color-accent-blue);
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.qr-option-info {
+    text-align: left;
+}
+
+.qr-option-card:hover {
+    background-color: rgba(0, 188, 212, 0.1);
+    border-color: var(--color-accent-blue);
+}
+
+
+.qr-code-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.qr-image-placeholder {
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-bg-dark); /* Dark square for QR code */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--color-accent-blue);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.qr-image-placeholder p {
+    font-size: 0.7rem;
+    color: var(--color-accent-blue);
+}
+
+.qr-image-placeholder.secondary {
+    border-color: var(--color-text-inactive);
+}
+
+.qr-code-info {
+    text-align: left;
+}
+
+.qr-name {
+    font-size: 1rem;
+    color: var(--color-text-light);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.qr-status {
+    font-size: 0.8rem;
+    color: var(--color-accent-blue);
+}
+
+/* --- QR POP-UP/MODAL STYLES --- */
+.qr-popup-overlay {
+    position: fixed; 
+    /* To cover the entire screen, assuming your payment page is full screen or a large modal */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it is on top of everything */
+}
+
+.qr-popup-content {
+    background-color: var(--color-bg-dark);
+    border: 2px solid var(--color-accent-blue);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    position: relative;
+    max-width: 350px;
+    width: 90%;
+    /* Ensure the pop-up itself is centered and visible */
+    box-shadow: 0 5px 25px rgba(0, 188, 212, 0.4); 
+}
+
+.qr-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: var(--color-text-inactive);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.qr-popup-title {
+    color: var(--color-accent-blue);
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+}
+
+.qr-image-display {
+    padding: 15px;
+    background-color: white; /* Essential for QR codes to scan properly */
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: inline-block; /* To contain the inner image */
+}
+
+.large-qr-image {
+    width: 250px;
+    height: 250px;
+    display: block;
+}
+
+.qr-popup-instruction {
+    font-size: 0.9rem;
+    color: var(--color-text-inactive);
+}
+
+/* -------------------------------------------------------------------
+ * NEW SECTION: BANK ACCOUNT LIST STYLES (Accordion)
+ * ------------------------------------------------------------------- */
+
+.bank-account-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px 0;
+}
+
+.bank-details-accordion {
+    width: 100%;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    overflow: hidden; /* Ensures smooth opening */
+    transition: all 0.3s ease;
+}
+
+/* Style the clickable summary/header */
+.bank-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-text-light);
+    list-style: none; /* Hide default triangle/arrow */
+    position: relative;
+    transition: background-color 0.2s;
+}
+
+.bank-details-accordion[open] > .bank-summary {
+    background-color: rgba(0, 188, 212, 0.1);
+    color: var(--color-accent-blue);
+}
+
+/* Custom indicator for accordion */
+.bank-summary::after {
+    content: '+';
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.bank-details-accordion[open] > .bank-summary::after {
+    content: '-';
+    transform: rotate(0deg);
+}
+
+.bank-name {
+    font-size: 1.1rem;
+}
+
+.bank-status {
+    font-size: 0.8rem;
+    color: var(--color-accent-blue);
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 188, 212, 0.2);
+}
+
+/* Style the details content */
+.account-details-content {
+    padding: 10px 15px 15px;
+    border-top: 1px dashed var(--color-border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.account-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.detail-label {
+    color: var(--color-text-inactive);
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.detail-value {
+    color: var(--color-text-light);
+    font-weight: 500;
+    word-break: break-all;
+    text-align: right;
+    flex-grow: 1;
+}
+
+/* Reuse the existing .copy-btn and .copy-icon styles */
+
+.scrollable-content-area {
+    /* Takes up all available space between the header/title and the footer/button */
+    flex-grow: 1; 
+    overflow-y: auto; /* Enables vertical scrolling when content overflows */
+    padding-right: 10px; /* Space for the scrollbar so it doesn't overlap content */
+    margin: 10px 0 20px 0; /* Add vertical padding/margin */
+    
+    /* Custom Scrollbar Styles (optional, for aesthetics) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-accent-blue) var(--color-bg-dark); /* Adjust colors to match theme */
+}
+
+.scrollable-content-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable-content-area::-webkit-scrollbar-thumb {
+    background-color: var(--color-accent-blue);
+    border-radius: 4px;
 }
