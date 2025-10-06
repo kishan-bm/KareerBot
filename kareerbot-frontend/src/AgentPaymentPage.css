@@ -34,8 +34,7 @@
 /* --- MAIN CARD WRAPPER & SHIFT ANIMATION --- */
 .payment-card-wrapper {
     width: 100%;
-    /* 🎯 CHANGE: Larger default max-width for the single card view */
-    max-width: 650px; /* Was 500px, now closer to the combined width */
+    max-width: 650px; 
     transition: max-width 0.4s ease;
     flex-shrink: 0; 
     /* height: 90vh; */
@@ -91,8 +90,7 @@
     flex-shrink: 0; 
     /* 🎯 NEW RULE: To align with the shifted main card */
     transform: translateX(-110px); /* Same transform as main card for alignment */
-    /* If the above transform causes issues, try making this just max-width and let flexbox handle it */
-    /* transform: none; */
+   
 }
 
 
