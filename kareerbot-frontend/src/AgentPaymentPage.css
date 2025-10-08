@@ -713,7 +713,7 @@
     /* Takes up all available space between the header/title and the footer/button */
     flex-grow: 1; 
     overflow-y: auto; /* Enables vertical scrolling when content overflows */
-    padding-right: 10px; /* Space for the scrollbar so it doesn't overlap content */
+    padding-right: 10px; /* Space  for the scrollbar so it doesn't overlap content */
     margin: 10px 0 20px 0; /* Add vertical padding/margin */
     scrollbar-width: thin;
     scrollbar-color: var(--color-accent-blue) var(--color-bg-dark); /* Adjust colors to match theme */
