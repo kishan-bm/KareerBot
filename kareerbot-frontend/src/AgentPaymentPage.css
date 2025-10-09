@@ -556,7 +556,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
+    /* background-color: rgba(0, 0, 0, 0.7); Dark semi-transparent background */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -564,16 +564,17 @@
 }
 
 .qr-popup-content {
-    background-color: var(--color-bg-dark);
+    background-color: var(--color-bg-dark); 
     border: 2px solid var(--color-accent-blue);
     border-radius: 10px;
     padding: 30px;
     text-align: center;
     position: relative;
-    max-width: 350px;
-    width: 90%;
+    max-width: 750px;
+    width: 100%;
     /* Ensure the pop-up itself is centered and visible */
     box-shadow: 0 5px 25px rgba(0, 188, 212, 0.4); 
+    margin-left: 55px;
 }
 
 .qr-popup-close {
