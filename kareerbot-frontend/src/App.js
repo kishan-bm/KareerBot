@@ -85,6 +85,7 @@ export default function App() {
     setSidebarOpen(!sidebarOpen);
   };
   
+  
   return (
     <div className="app-container">
       {/* Existing Sidebar */}
