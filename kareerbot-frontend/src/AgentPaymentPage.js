@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './AgentPaymentPage.css';
 
 // Import Icons
@@ -7,14 +7,12 @@ import ScannerIcon from './icons/scanner-icon.png';
 import AccountIcon from './icons/bank-icon.png';
 import CopyIcon from './icons/copy-icon.png';
 import UploadIcon from './icons/upload-icon.png';
-// --- NEW IMPORTS FOR QR CODES ---
 import QR1 from './icons/QR1.png';
 import QR2 from './icons/QR2.png';
-// ---------------------------------
+// Note: Static success/failed icons are not needed as we use CSS animation
 
-// --- Utility function for state management (moved outside main component)
-// This is used by all detail panels for file upload and confirmation
-const usePaymentState = (method) => {
+// --- Utility function for file upload state management ---
+const usePaymentState = () => {
     const [receiptFile, setReceiptFile] = useState(null);
     const [isUploaded, setIsUploaded] = useState(false);
     
@@ -27,18 +25,130 @@ const usePaymentState = (method) => {
     
     return { receiptFile, isUploaded, handleFileChange, setIsUploaded, setReceiptFile };
 };
-// ---------------------------------
+// --------------------------------------------------------
+
+// --- NEW ANIMATION COMPONENT: CSS-BASED ANIMATED CHECK/CROSS ---
+const AnimatedStatusIcon = ({ status }) => {
+    if (status === 'success') {
+        return (
+            <div className="status-icon success-icon">
+                <svg viewBox="0 0 100 100">
+                    <circle className="circle" cx="50" cy="50" r="45"/>
+                    <path className="check" d="M30 50 L45 65 L70 40"/>
+                </svg>
+            </div>
+        );
+    }
+    if (status === 'failed') {
+        return (
+            <div className="status-icon failed-icon">
+                <svg viewBox="0 0 100 100">
+                    <circle className="circle" cx="50" cy="50" r="45"/>
+                    <path className="cross-line-1" d="M30 30 L70 70"/>
+                    <path className="cross-line-2" d="M70 30 L30 70"/>
+                </svg>
+            </div>
+        );
+    }
+    return null; // No icon for 'simulating'
+};
+// -----------------------------------------------------------------
+
+
+// --- NEW COMPONENT: Payment Status Modal ---
+const PaymentStatusModal = ({ status, onContinue, onTryAgain, onSimulateSuccess, onSimulateFailed }) => {
+    
+    const getModalContent = () => {
+        switch (status) {
+            case 'simulating':
+                return {
+                    title: "Awaiting Verification",
+                    message: "Select a simulated outcome for your payment proof.",
+                    button1: { text: "Simulate Success (Continue)", action: onSimulateSuccess, className: "btn-success" },
+                    button2: { text: "Simulate Failed (Try Again)", action: onSimulateFailed, className: "btn-failed" }
+                };
+            case 'success':
+                return {
+                    title: "Payment Confirmed! 🎉",
+                    message: "Your AI Agent is now unlocked and ready to assist you.",
+                    button1: { text: "Go to Agent Dashboard", action: onContinue, className: "btn-success" },
+                    button2: null
+                };
+            case 'failed':
+                return {
+                    title: "Verification Failed ❌",
+                    message: "The payment proof could not be verified. Please check and try again.",
+                    button1: { text: "Back to Payment", action: onTryAgain, className: "btn-failed" },
+                    button2: null
+                };
+            default:
+                return null;
+        }
+    };
+
+    const content = getModalContent();
+
+    if (!content) return null;
+
+    return (
+        <div className="payment-status-overlay">
+            <div className={`payment-status-card status-${status}`}>
+                <AnimatedStatusIcon status={status} />
+                
+                <h3 className="status-title">{content.title}</h3>
+                <p className="status-message">{content.message}</p>
+                
+                <div className="status-actions">
+                    {content.button1 && (
+                        <button className={`status-btn ${content.button1.className}`} onClick={content.button1.action}>
+                            {content.button1.text}
+                        </button>
+                    )}
+                    {content.button2 && (
+                        <button className={`status-btn ${content.button2.className}`} onClick={content.button2.action}>
+                            {content.button2.text}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+// -------------------------------------------
+
 
 // --- Main Payment Page Component (Exports this) ---
 const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
     const [activeDetailPanel, setActiveDetailPanel] = useState(null);
+    const [paymentStatus, setPaymentStatus] = useState('closed'); // 'closed', 'simulating', 'success', 'failed'
+    
+    // --- Centralized function to handle confirmation logic (opens modal) ---
+    const handleConfirmPayment = useCallback((method) => {
+        // This is called by the buttons inside the detail panels
+        console.log(`Payment confirmed for method: ${method}. Opening simulation modal...`);
+        setPaymentStatus('simulating');
+    }, []); 
+    
+    // --- Handlers for the Simulation Modal ---
+    const handleSuccessContinue = () => {
+        setPaymentStatus('closed'); 
+        // Trigger the final redirect action from the parent component
+        onConfirmPayment(activeDetailPanel); 
+    };
+    
+    const handleTryAgain = () => {
+        setPaymentStatus('closed'); // Close modal and stay on the page
+    };
+    // ------------------------------------------
 
-    // -------------------- UPI Detail Panel (UNCHANGED LOGIC, using new utility hook) --------------------
-    const UpiDetailPanel = ({ onConfirmPayment }) => {
-        const { receiptFile, isUploaded, handleFileChange } = usePaymentState('upi');
+    // -------------------- UPI Detail Panel --------------------
+    const UpiDetailPanel = () => {
+        // Since usePaymentState is used here, the file state is local to this instance.
+        const { receiptFile, isUploaded, handleFileChange } = usePaymentState();
 
         const handleCopy = (upiId) => {
             navigator.clipboard.writeText(upiId);
+            // Optional: Show copy success feedback
         };
 
         const handleFinalConfirmation = () => {
@@ -46,7 +156,8 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                 alert("Please upload your payment receipt/screenshot.");
                 return;
             }
-            onConfirmPayment('upi');
+            // CRITICAL: Call the centralized handler to open the modal
+            handleConfirmPayment('upi'); 
         };
 
         const upiIds = [
@@ -101,10 +212,9 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
         );
     };
 
-    // -------------------- SCANNER DETAIL PANEL (UPDATED FOR POPUP LOGIC) --------------------
-    const ScannerDetailPanel = ({ onConfirmPayment }) => {
-        const { receiptFile, isUploaded, handleFileChange } = usePaymentState('scanner');
-        // State to track which QR code is selected (null, 'primary', or 'secondary')
+    // -------------------- SCANNER DETAIL PANEL --------------------
+    const ScannerDetailPanel = () => {
+        const { receiptFile, isUploaded, handleFileChange } = usePaymentState();
         const [activeQr, setActiveQr] = useState(null); 
 
         const qrCodes = [
@@ -113,7 +223,7 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
         ];
 
         const handleQrClick = (key) => {
-            setActiveQr(key); // Opens the popup
+            setActiveQr(key); 
         };
         
         const currentQrData = qrCodes.find(qr => qr.key === activeQr);
@@ -123,7 +233,8 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                 alert("Please upload your payment receipt/screenshot.");
                 return;
             }
-            onConfirmPayment('scanner');
+            // CRITICAL: Call the centralized handler to open the modal
+            handleConfirmPayment('scanner');
         };
 
         return (
@@ -133,7 +244,6 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
 
                 <div className="qr-code-list">
                     {qrCodes.map((qr) => (
-                        // Clickable card to open the QR pop-up
                         <div 
                             key={qr.key} 
                             className={`qr-option-card ${activeQr === qr.key ? 'active-qr-option' : ''}`}
@@ -150,9 +260,7 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
 
                 {/* --- QR Code POP-UP Overlay (Conditional Rendering) --- */}
                 {activeQr && currentQrData && (
-                    // Click the overlay background to close the popup
                     <div className="qr-popup-overlay" onClick={() => setActiveQr(null)}>
-                        {/* Prevent clicks inside the content from closing the popup */}
                         <div className="qr-popup-content" onClick={e => e.stopPropagation()}>
                             <button className="qr-popup-close" onClick={() => setActiveQr(null)}>X</button>
                             <h4 className="qr-popup-title">Scan {currentQrData.name}</h4>
@@ -193,13 +301,12 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
         );
     };
 
-    // -------------------- ACCOUNT DETAIL PANEL (UPDATED FOR SCROLLING) --------------------
-    const AccountDetailPanel = ({ onConfirmPayment }) => {
-        const { receiptFile, isUploaded, handleFileChange } = usePaymentState('account');
+    // -------------------- ACCOUNT DETAIL PANEL --------------------
+    const AccountDetailPanel = () => {
+        const { receiptFile, isUploaded, handleFileChange } = usePaymentState();
 
         const handleCopy = (text) => {
             navigator.clipboard.writeText(text);
-            // Optional: Show copy success feedback
         };
 
         const bankAccounts = [
@@ -212,7 +319,18 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                 name: 'SBI BANK', status: 'Alternative', 
                 account: '65432109876543', ifsc: 'SBI0009988', 
                 holder: 'Company Name Tech', branch: 'Chennai Branch' 
-            }
+            },
+            // Added more accounts to ensure scroll functionality
+            { 
+                name: 'ICICI BANK', status: 'Primary', 
+                account: '98765432109876', ifsc: 'ICIC0005678', 
+                holder: 'Company Name Tech', branch: 'Bangalore Branch' 
+            },
+            { 
+                name: 'AXIS BANK', status: 'Backup', 
+                account: '12345678901234', ifsc: 'AXIS0009999', 
+                holder: 'Company Name Tech', branch: 'Delhi Branch' 
+            },
         ];
         
         const handleFinalConfirmation = () => {
@@ -220,7 +338,8 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                 alert("Please upload your transaction proof.");
                 return;
             }
-            onConfirmPayment('account');
+            // CRITICAL: Call the centralized handler to open the modal
+            handleConfirmPayment('account');
         };
 
         return (
@@ -228,7 +347,7 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                 <h3 className="detail-title">Direct Bank Transfer (NEFT/IMPS)</h3>
                 <p className="detail-subtitle">Select a bank to view account details for transfer.</p>
 
-                {/* --- SCROLLABLE CONTAINER ADDED HERE --- */}
+                {/* --- SCROLLABLE CONTAINER --- */}
                 <div className="scrollable-content-area"> 
                     <div className="bank-account-list">
                         {bankAccounts.map((bank, index) => (
@@ -299,11 +418,11 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
         // Pass the onConfirmPayment prop down to the detail components
         switch (activeDetailPanel) {
             case 'upi':
-                return <UpiDetailPanel onConfirmPayment={onConfirmPayment} />;
+                return <UpiDetailPanel />;
             case 'scanner':
-                return <ScannerDetailPanel onConfirmPayment={onConfirmPayment} />;
+                return <ScannerDetailPanel />;
             case 'account':
-                return <AccountDetailPanel onConfirmPayment={onConfirmPayment} />;
+                return <AccountDetailPanel />;
             default:
                 return null;
         }
@@ -369,6 +488,18 @@ const AgentPaymentPage = ({ orderSummary, totalDue, onConfirmPayment }) => {
                     {renderDetailPanel()}
                 </div>
             )}
+            
+            {/* --- PAYMENT STATUS MODAL --- */}
+            {paymentStatus !== 'closed' && (
+                <PaymentStatusModal 
+                    status={paymentStatus}
+                    onContinue={handleSuccessContinue}
+                    onTryAgain={handleTryAgain}
+                    onSimulateSuccess={() => setPaymentStatus('success')}
+                    onSimulateFailed={() => setPaymentStatus('failed')}
+                />
+            )}
+            {/* ---------------------------- */}
         </div>
     );
 };

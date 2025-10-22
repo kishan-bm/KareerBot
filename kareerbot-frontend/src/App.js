@@ -92,12 +92,12 @@ export default function App() {
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* ... (Sidebar content remains the same) ... */}
         <div className="sidebar-header">
-          <h3>KareerBot Menu</h3>
+          <h3>KareerBot</h3>
           <button className="close-btn" onClick={toggleSidebar}>&times;</button>
         </div>
         <div className="sidebar-search-container">
           <div className="search-bar">
-            <span className="material-icons search-icon">search</span>
+            <span className="material-icons search-icon"></span>
             <input type="text" placeholder="Search" />
           </div>
         </div>
@@ -106,8 +106,8 @@ export default function App() {
         </ul>
         <div className="bottom-sidebar-links">
           <ul className="sidebar-links">
-            <li><span className="material-icons">settings</span>Settings</li>
-            <li><span className="material-icons">help</span>Help</li>
+            <li><span className="material-icons"></span>Settings</li>
+            <li><span className="material-icons"></span>Help</li>
             <li className="profile-item">
               <img src={userIcon} alt="Profile" className="profile-icon" />
               <span className="profile-name">Kishan B M</span>

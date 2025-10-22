@@ -729,3 +729,203 @@
     background-color: var(--color-accent-blue);
     border-radius: 4px;
 }
+
+/* --- ANIMATION ICON STYLES (New Section) --- */
+
+.status-icon {
+    width: 80px;
+    height: 80px;
+    margin: 20px auto 30px;
+    /* Basic circle for background */
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.status-icon .circle {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    /* Start drawing the circle from the top */
+    stroke-dasharray: 283; /* 2 * PI * 45 (radius) ~= 282.7 */
+    stroke-dashoffset: 283;
+    animation: circle-draw 0.5s ease-in-out forwards;
+}
+
+@keyframes circle-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* --- SUCCESS ANIMATION --- */
+.success-icon .circle {
+    stroke: #4CAF50; /* Green */
+}
+
+.success-icon .check {
+    fill: none;
+    stroke: #4CAF50; /* Green */
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 60; /* Approximate length of the checkmark */
+    stroke-dashoffset: 45;
+    /* Delay the checkmark animation until the circle is drawn */
+    animation: check-draw 0.3s ease-in-out 0.5s forwards;
+}
+
+@keyframes check-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* --- FAILED ANIMATION --- */
+.failed-icon .circle {
+    stroke: #F44336; /* Red */
+}
+
+.failed-icon .cross-line-1, 
+.failed-icon .cross-line-2 {
+    fill: none;
+    stroke: #F44336; /* Red */
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 57; /* Approximate length of the cross lines (sqrt(40^2 + 40^2) ~= 56.5) */
+    stroke-dashoffset: 57;
+    animation: cross-draw 0.3s ease-in-out 0.5s forwards;
+}
+
+/* Slight delay between the two cross lines for better effect */
+.failed-icon .cross-line-2 {
+    animation: cross-draw 0.3s ease-in-out 0.8s forwards;
+}
+
+@keyframes cross-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* --- Existing Modal Styles (Ensure the z-index is high) --- */
+
+.payment-status-overlay {
+    /* ... (rest of styles) ... */
+    z-index: 2000; /* CRITICAL: Must be above all other elements */
+}
+
+/* --- PAYMENT STATUS MODAL STYLES --- */
+
+.payment-status-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85); /* Very dark semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Ensure it's above everything, including other modals/popups */
+}
+
+.payment-status-card {
+    background-color: var(--color-bg-dark); /* Dark card background */
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    /* Optional: Add an animation to the icon */
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
+.status-title {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.status-message {
+    font-size: 1rem;
+    color: var(--color-text-inactive);
+    margin-bottom: 30px;
+}
+
+/* Color Overrides based on Status */
+.status-success {
+    border-left: 5px solid #4CAF50; /* Green */
+}
+
+.status-success .status-title {
+    color: #4CAF50; /* Green */
+}
+
+.status-failed {
+    border-left: 5px solid #F44336; /* Red */
+}
+
+.status-failed .status-title {
+    color: #F44336; /* Red */
+}
+
+.status-simulating {
+     border-left: 5px solid var(--color-accent-blue); /* Blue */
+}
+
+.status-simulating .status-title {
+    color: var(--color-accent-blue); /* Blue */
+}
+
+/* Button Styling for Actions */
+.status-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.status-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-success {
+    background-color: #4CAF50;
+    color: #fff;
+}
+
+.btn-success:hover {
+    background-color: #45a049;
+}
+
+.btn-failed {
+    background-color: #F44336;
+    color: #fff;
+}
+
+.btn-failed:hover {
+    background-color: #d32f2f;
+}

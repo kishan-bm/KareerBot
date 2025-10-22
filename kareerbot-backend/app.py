@@ -204,6 +204,7 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+# --- ENDPOINT 3: Agent Goal Planning (ENHANCED) ---
 @app.route("/api/agent-plan", methods=["POST"])
 def agent_plan():
     data = request.json
@@ -214,23 +215,29 @@ def agent_plan():
 
     try:
         agent_prompt = f"""
-            You are an expert AI agent that helps users create actionable plans to achieve their goals.
+            You are an expert AI agent that helps users create a DETAILED, actionable career plan.
             
             Instructions:
-            - Take the user's goal and break it down into 5 clear, sequential steps.
+            - Take the user's goal and break it down into exactly 5 clear, sequential steps (Phase 1, Phase 2, etc.).
+            - For each step, identify exactly 3 core skills/technologies/knowledge points required for completion.
             - Provide a brief, one-sentence description for each step.
-            - The tone should be motivating and professional.
             - You MUST ONLY respond with a valid JSON object. Do not include any other text.
             
-            Output format:
+            Output format (STRICT JSON):
             {{
                 "goal": "{goal}",
                 "plan": [
-                    {{"step": "step 1 title", "description": "brief description"}},
-                    {{"step": "step 2 title", "description": "brief description"}},
-                    {{"step": "step 3 title", "description": "brief description"}},
-                    {{"step": "step 4 title", "description": "brief description"}},
-                    {{"step": "step 5 title", "description": "brief description"}}
+                    {{
+                        "step": "Phase 1: Foundation", 
+                        "description": "Master core skills and tools.",
+                        "skills_required": ["Skill 1", "Skill 2", "Skill 3"]
+                    }},
+                    {{
+                        "step": "Phase 2: Project Building", 
+                        "description": "Develop a complex, deployable portfolio project.",
+                        "skills_required": ["Skill 4", "Skill 5", "Skill 6"]
+                    }},
+                    // ... continue for 5 steps ...
                 ]
             }}
 
@@ -241,14 +248,14 @@ def agent_plan():
         
         json_match = re.search(r'\{.*\}', response, re.DOTALL)
         if json_match:
-            json_string = json_match.group(0)
-            plan = json.loads(json_string)
+            plan = json.loads(json_match.group(0))
         else:
             raise ValueError("Could not find a valid JSON object in the AI's response.")
         
         return jsonify({"plan": plan})
     
     except Exception as e:
+        print(f"Error in agent_plan: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/agent-query", methods=["POST"])
