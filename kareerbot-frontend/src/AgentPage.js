@@ -159,7 +159,7 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
     const [fullResumeText, setFullResumeText] = useState(null); 
     const chatEndRef = useRef(null);
     const [userGoalPlan, setUserGoalPlan] = useState(null);
-    
+
     // Scroll to bottom of chat
     useEffect(() => {
         if (activeView === 'chat') {
@@ -205,45 +205,80 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
         setChatHistory([AGENT_WELCOME]); 
     };
 
-    const handleChatSubmit = async (e) => {
-        e.preventDefault();
-        if (!chatInput.trim() || loading) return;
-        
-        const userMessage = chatInput;
-        setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
-        setChatInput('');
-        setLoading(true);
+    // --- In AgentPage.js, replace the existing handleChatSubmit function ---
 
-        try {
-            let requestData = { query: userMessage, chat_history: chatHistory, persona: persona };
-            let endpoint = "http://localhost:5000/api/agent-query";
-            let headers = {};
+const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || loading) return;
 
-            if (userMessage.toLowerCase().includes("my resume is:") || userMessage.toLowerCase().includes("here is my resume:")) {
-                endpoint = "http://localhost:5000/api/process-resume";
-                requestData = { text: userMessage.substring(userMessage.indexOf(":") + 1).trim() };
-                headers = { 'Content-Type': 'application/json' };
-            }
+    const userMessage = chatInput;
+    const isInitialGoalMessage = chatHistory.length === 1;
 
-            const res = await axios.post(endpoint, requestData, { headers });
+    setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
+    setChatInput('');
+    setLoading(true);
+
+    try {
+        // --- LOGIC BLOCK A: INITIAL GOAL SETTING (When chat history has only the welcome message) ---
+        if (isInitialGoalMessage) {
+            const goal = userMessage; // Assume the first message is the user's goal
             
-            let botReply = "";
-            if (endpoint === "http://localhost:5000/api/process-resume") {
-                const feedback = res.data.feedback;
-                setFullResumeText(res.data.full_resume_text); 
-                botReply = `Thanks for your resume! Here's some initial feedback:\n\nStrengths:\n${feedback.strengths.map(s => `- ${s}`).join('\n')}\n\nImprovements:\n${feedback.improvements.map(i => `- ${i}`).join('\n')}\n\nI've stored your resume. How else can I help?`;
-            } else {
-                botReply = res.data.reply;
-            }
+            // 1. Get Plan Structure
+            const planRes = await axios.post("http://localhost:5000/api/agent-plan", { goal });
+            const initialPlan = planRes.data.plan;
+            
+            // 2. Get Prediction Score (Requires actual resume text)
+            // NOTE: In a real app, we would retrieve resume text from the DB/Vector Store here.
+            // For now, we will use a dummy resume text to get the prediction.
+            const dummyResumeText = "Kishan B M. Experience: Full Stack Developer with React, Node.js, and Python. Skills: AI/ML Integration, MongoDB, SQL.";
+            
+            const predictionRes = await axios.post("http://localhost:5000/api/predict-success", { 
+                resumeText: dummyResumeText,
+                goal: goal
+            });
+            const predictionData = predictionRes.data.prediction;
 
+            // 3. Construct the Final Plan Object
+            const fullPlan = {
+                goal: goal,
+                predictionScore: predictionData.success_score,
+                justification: predictionData.justification,
+                plan: initialPlan.plan.map(step => ({ ...step, isComplete: false }))
+            };
+            
+            // 4. Update Global State and Switch View
+            setUserGoalPlan(fullPlan); // Save the complete plan
+            
+            const botMessage = [
+                "✅ GOAL SET: " + goal,
+                "**Initial Success Score:** " + predictionData.success_score + "%",
+                "**Justification:** " + predictionData.justification,
+                "\nI have generated your detailed roadmap. Click on **MyGoal/Path** to view and start tracking your progress!"
+            ].join('\n');
+            
+            setChatHistory(prev => [...prev, { sender: 'bot', text: botMessage }]);
+            
+            // NOTE: Do NOT switch to the Goal Page automatically. Let the user click the bubble.
+            
+        // --- LOGIC BLOCK B: STANDARD AGENT QUERY (When conversation is ongoing) ---
+        } else {
+            const chatHistoryPayload = chatHistory.map(msg => ({ sender: msg.sender, text: msg.text }));
+            const res = await axios.post("http://localhost:5000/api/agent-query", { 
+                query: userMessage,
+                chat_history: chatHistoryPayload,
+                persona: persona
+            });
+            const botReply = res.data.reply;
             setChatHistory(prev => [...prev, { sender: 'bot', text: botReply }]);
-        } catch (err) {
-            setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ An error occurred. Please try again later.' }]);
-            console.error(err);
-        } finally {
-            setLoading(false);
         }
-    };
+
+    } catch (err) {
+        console.error(err);
+        setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ An error occurred during plan generation. Check backend server logs.' }]);
+    } finally {
+        setLoading(false);
+    }
+};
 
     // --- Renderers for the main content area ---
     const renderContent = () => {

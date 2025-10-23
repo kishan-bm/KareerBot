@@ -36,7 +36,7 @@ tavily_api_key = os.getenv("TAVILY_API_KEY")
 search = TavilySearchResults(api_key=tavily_api_key)
 tools = [search]
 
-chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=genai_api_key)
+chat_model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=genai_api_key)
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=genai_api_key)
 
 # This is the corrected prompt for the tool-calling agent.
@@ -224,6 +224,7 @@ def agent_plan():
             - You MUST ONLY respond with a valid JSON object. Do not include any other text.
             
             Output format (STRICT JSON):
+            
             {{
                 "goal": "{goal}",
                 "plan": [
@@ -287,7 +288,47 @@ def agent_query():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# --- ENDPOINT 5: Success Prediction Model (NEW FEATURE) ---
+@app.route("/api/predict-success", methods=["POST"])
+def predict_success():
+    data = request.json
+    resume_text = data.get("resumeText")
+    goal = data.get("goal")
+
+    if not resume_text or not goal:
+        return jsonify({"error": "Resume and goal are required."}), 400
+
+    try:
+        # NOTE: This prompt tells the AI to act as a prediction model.
+        prediction_prompt = f"""
+            You are a professional career analyst and data scientist.
+            Your task is to analyze the provided resume against the target career goal and predict the likelihood of success.
+
+            Instructions: 
+            - Provide a success score as a percentage (from 0 to 100).
+            - Write a detailed justification (3-4 sentences) for the score, explaining key strengths and the biggest gaps.
+            - You MUST ONLY respond with a valid JSON object.
+
+            Output format: {{ "success_score": 75, "justification": "Based on the resume, the user has strong skills in X and Y... However, there is a gap in Z." }}
+            Resume: {resume_text}
+            Career Goal: {goal}
+        """
+
+        response = chat_model.invoke(prediction_prompt).content
         
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            prediction = json.loads(json_match.group(0))
+        else:
+            raise ValueError("Could not find a valid JSON object in the AI's response.")
+            
+        return jsonify({"prediction": prediction})
+
+    except Exception as e:
+        print(f"Error in predict_success: {e}")
+        return jsonify({"error": str(e)}), 500
+    
 if __name__ == '__main__':
     if not os.path.exists(CHROMA_DB_PATH):
         os.makedirs(CHROMA_DB_PATH)
