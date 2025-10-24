@@ -224,7 +224,7 @@ def agent_plan():
             - You MUST ONLY respond with a valid JSON object. Do not include any other text.
             
             Output format (STRICT JSON):
-            
+
             {{
                 "goal": "{goal}",
                 "plan": [
@@ -333,6 +333,7 @@ if __name__ == '__main__':
     if not os.path.exists(CHROMA_DB_PATH):
         os.makedirs(CHROMA_DB_PATH)
     app.run(port=5000, debug=True)
+    
 
 
 # import os
