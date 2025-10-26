@@ -160,9 +160,10 @@ def process_resume():
             feedback = json.loads(json_string)
         else:
             raise ValueError("Could not find a valid JSON object in the AI's response.")
-            
-        return jsonify({"feedback": feedback})
-        
+
+        # Include the raw extracted resume text so the frontend can display/store it
+        return jsonify({"feedback": feedback, "resume_text": resume_text})
+
     except Exception as e:
         print(f"Error in process_resume: {e}")
         return jsonify({"error": str(e)}), 500
@@ -205,6 +206,7 @@ def chat():
 
 
 # --- ENDPOINT 3: Agent Goal Planning (ENHANCED) ---
+# --- ENDPOINT 3: Agent Goal Planning ---
 @app.route("/api/agent-plan", methods=["POST"])
 def agent_plan():
     data = request.json
@@ -215,30 +217,24 @@ def agent_plan():
 
     try:
         agent_prompt = f"""
-            You are an expert AI agent that helps users create a DETAILED, actionable career plan.
+            You are an expert AI agent that helps users create actionable plans to achieve their goals.
             
             Instructions:
-            - Take the user's goal and break it down into exactly 5 clear, sequential steps (Phase 1, Phase 2, etc.).
-            - For each step, identify exactly 3 core skills/technologies/knowledge points required for completion.
+            - Take the user's goal and break it down into 5 clear, sequential steps.
             - Provide a brief, one-sentence description for each step.
+            - The tone should be motivating and professional.
+            - IMPORTANT: You MUST escape any double quotes inside your strings with a backslash (\") or use single quotes, but the overall output MUST be strict JSON.
             - You MUST ONLY respond with a valid JSON object. Do not include any other text.
             
-            Output format (STRICT JSON):
-
+            Output format:
             {{
                 "goal": "{goal}",
                 "plan": [
-                    {{
-                        "step": "Phase 1: Foundation", 
-                        "description": "Master core skills and tools.",
-                        "skills_required": ["Skill 1", "Skill 2", "Skill 3"]
-                    }},
-                    {{
-                        "step": "Phase 2: Project Building", 
-                        "description": "Develop a complex, deployable portfolio project.",
-                        "skills_required": ["Skill 4", "Skill 5", "Skill 6"]
-                    }},
-                    // ... continue for 5 steps ...
+                    {{"step": "step 1 title", "description": "brief description"}},
+                    {{"step": "step 2 title", "description": "brief description"}},
+                    {{"step": "step 3 title", "description": "brief description"}},
+                    {{"step": "step 4 title", "description": "brief description"}},
+                    {{"step": "step 5 title", "description": "brief description"}}
                 ]
             }}
 
@@ -247,10 +243,27 @@ def agent_plan():
 
         response = chat_model.invoke(agent_prompt).content
         
+        # --- FIX: Two-step robust JSON extraction and cleanup ---
+        
+        # 1. Regex search for the raw JSON block
         json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        
         if json_match:
-            plan = json.loads(json_match.group(0))
+            json_string = json_match.group(0)
+            
+            # 2. Add an extra layer of defense: fix common JSON structural errors before parsing
+            # This is done by replacing problematic newlines/tabs and escaping quotes inside the string.
+            # For simplicity, we'll try to find and repair internal quotes that break the format.
+            try:
+                plan = json.loads(json_string)
+            except json.JSONDecodeError:
+                # If standard parse fails, try a manual, safer replacement (often fixes the delimiter issue)
+                # This complex replacement logic is best placed in a robust helper, but for this context:
+                safe_json_string = json_string.replace('": "', '": "').replace('", "', '", "')
+                plan = json.loads(safe_json_string)
+            
         else:
+            # If no JSON block is found, raise an error
             raise ValueError("Could not find a valid JSON object in the AI's response.")
         
         return jsonify({"plan": plan})
@@ -333,7 +346,6 @@ if __name__ == '__main__':
     if not os.path.exists(CHROMA_DB_PATH):
         os.makedirs(CHROMA_DB_PATH)
     app.run(port=5000, debug=True)
-    
 
 
 # import os

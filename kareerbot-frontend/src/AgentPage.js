@@ -8,6 +8,7 @@ import AgentPaymentPage from './AgentPaymentPage'; // NEW IMPORT
 
 // Import Icons
 import sendIcon from './send.png'; 
+import paperclipIcon from './paperclip.png';
 import MyGoalIcon from './mygoal-icon.png'; 
 import ChatIcon from './chat-icon.png';
 import JobsIcon from './jobs-icon.png';
@@ -18,94 +19,44 @@ import ProfileIcon from './icons/profile-icon.png';
 
 
 // --- Placeholder Components for Dashboard Tabs (No changes here) ---
-const MyGoalPage = ({ resumeText }) => {
-    const [goalInput, setGoalInput] = useState('');
-    const [currentPlan, setCurrentPlan] = useState(null);
-    const [prediction, setPrediction] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+const MyGoalPage = ({ resumeText, userGoalPlan, onConfirmPlan, onChangePlan }) => {
+    // This page now shows the generated plan and allows the user to confirm or request changes.
+    if (!userGoalPlan) {
+        return (
+            <div className="agent-content-page goal-setting-page">
+                <h2 className="goal-title">Set Your Goal in Chat</h2>
+                <p>Start a conversation in the Chat tab and tell your agent about your career goal.
+                Upload your resume there first so the agent can tailor the plan.</p>
+            </div>
+        );
+    }
 
-    const handleGoalSubmit = async (e) => {
-        e.preventDefault();
-        if (!goalInput.trim()) return;
-        if (!resumeText) {
-             setError("Please submit your resume first through the main chat interface.");
-             return;
-        }
-
-        setLoading(true);
-        setError(null);
-        setPrediction(null); // Clear previous prediction
-        setCurrentPlan(null); // Clear previous plan
-
-        try {
-            // Step 1: Get Success Prediction
-            const predictionRes = await axios.post("http://localhost:5000/api/predict-success", { 
-                resumeText: resumeText,
-                goal: goalInput 
-            });
-            setPrediction(predictionRes.data.prediction); 
-            
-            // Step 2: Generate Plan
-            const planRes = await axios.post("http://localhost:5000/api/agent-plan", { goal: goalInput });
-            setCurrentPlan(planRes.data.plan); 
-
-        } catch (err) {
-            console.error("Goal/Prediction API Error:", err);
-            setError("Failed to generate plan or prediction. Check server logs.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const plan = userGoalPlan;
 
     return (
-        <div className="agent-content-page mygoal-page">
-            <h2>Your Career Roadmap</h2>
-            <p>Define your primary career goal and let your agent build your personalized roadmap.</p>
-            
-            <form onSubmit={handleGoalSubmit} className="goal-input-section">
-                <input
-                    type="text"
-                    value={goalInput}
-                    onChange={(e) => setGoalInput(e.target.value)}
-                    placeholder="E.g., Become a Senior Full-Stack Developer"
-                    className="goal-input-field"
-                    disabled={loading}
-                />
-                <button type="submit" disabled={loading} className="goal-submit-button">
-                    {loading ? 'Analyzing...' : 'Generate Roadmap'}
-                </button>
-            </form>
+        <div className="agent-content-page goal-tracking-page">
+            <h2>Your Proposed Roadmap</h2>
+            <p>Review the agent's proposed plan below. Choose Confirm to lock and generate the visual roadmap, or Change to ask the agent to modify it.</p>
 
-            {error && <div className="error-message">{error}</div>}
-
-            {prediction && (
-                <div className="prediction-results">
-                    <h3>Predicted Success: <span className="success-score-display">{prediction.success_score}%</span></h3>
-                    <div className="prediction-bar-container">
-                        <div className="prediction-bar-fill" style={{ width: `${prediction.success_score}%` }}></div>
-                    </div>
-                    <p className="prediction-justification">{prediction.justification}</p>
+            <div className="plan-details-section">
+                <h3>Plan for: {plan.goal}</h3>
+                <div className="plan-steps">
+                    {plan.plan.map((item, index) => (
+                        <div key={index} className="plan-step-card">
+                            <h4>Step {index + 1}: {item.step}</h4>
+                            <p>{item.description}</p>
+                        </div>
+                    ))}
                 </div>
-            )}
+            </div>
 
-            {currentPlan && (
-                <div className="plan-details-section">
-                    <h3>Plan for: {currentPlan.goal}</h3>
-                    <div className="plan-steps">
-                        {currentPlan.plan.map((item, index) => (
-                            <div key={index} className="plan-step-card">
-                                <h4>Step {index + 1}: {item.step}</h4>
-                                <p>{item.description}</p>
-                                <label className="checkbox-container">
-                                    <input type="checkbox" className="goal-completion-checkbox" />
-                                    <span className="checkmark"></span> Mark as Complete
-                                </label>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+                <button className="goal-submit-button" onClick={() => onChangePlan && onChangePlan()}>Change Plan</button>
+                <button className="goal-submit-button" onClick={() => onConfirmPlan && onConfirmPlan()}>Confirm Plan</button>
+            </div>
+
+            {/* Roadmap visual area - initially hidden until confirmed. The parent will toggle to show a flow diagram when confirmed. */}
+            {/* The confirmed roadmap rendering is handled by the parent via a different view or state. */}
         </div>
     );
 };
@@ -140,7 +91,7 @@ const TutorialsPage = () => (
 
 
 const AGENT_WELCOME = {
-    text: "Hello! I am your AI Agent. How can I assist you today?",
+    text: "I am an AI Agent. You can ask me Q&A, provide your skills and resume, and tell me your goal — I will help guide your career and create a plan.",
     sender: "bot",
 };
 
@@ -157,6 +108,9 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
     const [chatHistory, setChatHistory] = useState([AGENT_WELCOME]);
     const [persona, setPersona] = useState("a professional career coach");
     const [fullResumeText, setFullResumeText] = useState(null); 
+    const [resumeFeedback, setResumeFeedback] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [planConfirmed, setPlanConfirmed] = useState(false);
     const chatEndRef = useRef(null);
     const [userGoalPlan, setUserGoalPlan] = useState(null);
 
@@ -212,55 +166,42 @@ const handleChatSubmit = async (e) => {
     if (!chatInput.trim() || loading) return;
 
     const userMessage = chatInput;
-    const isInitialGoalMessage = chatHistory.length === 1;
+    // Treat the next user message as goal if a plan has not yet been generated
+    const isGoalSetting = !userGoalPlan;
 
     setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
     setChatInput('');
     setLoading(true);
 
     try {
-        // --- LOGIC BLOCK A: INITIAL GOAL SETTING (When chat history has only the welcome message) ---
-        if (isInitialGoalMessage) {
-            const goal = userMessage; // Assume the first message is the user's goal
-            
-            // 1. Get Plan Structure
+    if (isGoalSetting) {
+            const goal = userMessage;
+
+            // 1. Get Plan
             const planRes = await axios.post("http://localhost:5000/api/agent-plan", { goal });
             const initialPlan = planRes.data.plan;
-            
-            // 2. Get Prediction Score (Requires actual resume text)
-            // NOTE: In a real app, we would retrieve resume text from the DB/Vector Store here.
-            // For now, we will use a dummy resume text to get the prediction.
-            const dummyResumeText = "Kishan B M. Experience: Full Stack Developer with React, Node.js, and Python. Skills: AI/ML Integration, MongoDB, SQL.";
-            
-            const predictionRes = await axios.post("http://localhost:5000/api/predict-success", { 
-                resumeText: dummyResumeText,
-                goal: goal
-            });
-            const predictionData = predictionRes.data.prediction;
 
-            // 3. Construct the Final Plan Object
+            // 2. Get Prediction using uploaded resume if present
+            let predictionData = { success_score: 50, justification: 'No resume provided.' };
+            if (fullResumeText) {
+                try {
+                    const predRes = await axios.post('http://localhost:5000/api/predict-success', { resumeText: fullResumeText, goal });
+                    predictionData = predRes.data.prediction;
+                } catch (pe) {
+                    console.warn('Prediction failed', pe);
+                }
+            }
+
             const fullPlan = {
                 goal: goal,
                 predictionScore: predictionData.success_score,
                 justification: predictionData.justification,
                 plan: initialPlan.plan.map(step => ({ ...step, isComplete: false }))
             };
-            
-            // 4. Update Global State and Switch View
-            setUserGoalPlan(fullPlan); // Save the complete plan
-            
-            const botMessage = [
-                "✅ GOAL SET: " + goal,
-                "**Initial Success Score:** " + predictionData.success_score + "%",
-                "**Justification:** " + predictionData.justification,
-                "\nI have generated your detailed roadmap. Click on **MyGoal/Path** to view and start tracking your progress!"
-            ].join('\n');
-            
-            setChatHistory(prev => [...prev, { sender: 'bot', text: botMessage }]);
-            
-            // NOTE: Do NOT switch to the Goal Page automatically. Let the user click the bubble.
-            
-        // --- LOGIC BLOCK B: STANDARD AGENT QUERY (When conversation is ongoing) ---
+
+            setUserGoalPlan(fullPlan);
+            console.log('User goal plan set:', fullPlan);
+            setChatHistory(prev => [...prev, { sender: 'bot', text: `✅ GOAL SET: ${goal}\nPrediction: ${predictionData.success_score}%\n${predictionData.justification}\nReview your plan in MyGoal.` }]);
         } else {
             const chatHistoryPayload = chatHistory.map(msg => ({ sender: msg.sender, text: msg.text }));
             const res = await axios.post("http://localhost:5000/api/agent-query", { 
@@ -274,7 +215,7 @@ const handleChatSubmit = async (e) => {
 
     } catch (err) {
         console.error(err);
-        setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ An error occurred during plan generation. Check backend server logs.' }]);
+        setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ An error occurred. Check backend server logs.' }]);
     } finally {
         setLoading(false);
     }
@@ -284,7 +225,48 @@ const handleChatSubmit = async (e) => {
     const renderContent = () => {
         switch (activeView) {
             case 'myGoal':
-                return <MyGoalPage resumeText={fullResumeText} />;
+                if (planConfirmed && userGoalPlan) {
+                    // Render visual roadmap flow using existing CSS
+                    return (
+                        <div className="agent-content-page goal-tracking-page-container">
+                            <h2 className="goal-title">Roadmap for: {userGoalPlan.goal}</h2>
+                            <div className="horizontal-roadmap-flow">
+                                {userGoalPlan.plan.map((step, idx) => (
+                                    <React.Fragment key={idx}>
+                                        <div className={`flow-step ${idx <  userGoalPlan.plan.findIndex(s => s.isComplete) ? 'complete' : ''}`}>
+                                            <div className="step-header">
+                                                <div className="step-number">{idx+1}</div>
+                                                <h4>{step.step}</h4>
+                                            </div>
+                                            <div className="step-description">{step.description}</div>
+                                            <div className="skills-list">
+                                                <h5>Suggested skills & actions</h5>
+                                                <ul>
+                                                    <li>Learn core concepts</li>
+                                                    <li>Build a project</li>
+                                                    <li>Apply to jobs</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        {idx < userGoalPlan.plan.length - 1 && <div className={`flow-connector ${idx <  userGoalPlan.plan.findIndex(s => s.isComplete) ? 'complete' : ''}`} />}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                }
+
+                return <MyGoalPage resumeText={fullResumeText} userGoalPlan={userGoalPlan} onConfirmPlan={() => setPlanConfirmed(true)} onChangePlan={async () => {
+                    // Simple change flow: ask agent to regenerate plan with a slight modification prompt
+                    if (!userGoalPlan) return;
+                    const newGoal = userGoalPlan.goal + ' (revise)';
+                    try {
+                        const resp = await axios.post('http://localhost:5000/api/agent-plan', { goal: newGoal });
+                        setUserGoalPlan(resp.data.plan);
+                    } catch (e) {
+                        console.error('Change plan failed', e);
+                    }
+                }} />;
             case 'chat':
                 return (
                     <>
@@ -305,6 +287,8 @@ const handleChatSubmit = async (e) => {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* resume upload moved to input area */}
                             {loading && (
                                 <div className="agent-message bot">
                                     <div className="typing-indicator">
@@ -323,10 +307,43 @@ const handleChatSubmit = async (e) => {
                                 className="agent-input-field"
                                 disabled={loading}
                             />
+                            <input id="hidden-resume-input" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style={{ display: 'none' }} onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                setUploading(true);
+                                const form = new FormData();
+                                form.append('file', file);
+                                try {
+                                    const res = await axios.post('http://localhost:5000/api/process-resume', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                    const data = res.data;
+                                    if (data.feedback) setResumeFeedback(data.feedback);
+                                    if (data.resume_text) setFullResumeText(data.resume_text);
+                                    setChatHistory(prev => [...prev, { sender: 'bot', text: '✅ Resume uploaded and ingested. You can now set your goal in this chat.' }]);
+                                } catch (err) {
+                                    console.error('Upload error', err);
+                                    setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ Failed to upload resume. See console for details.' }]);
+                                } finally {
+                                    setUploading(false);
+                                    e.target.value = null;
+                                }
+                            }} />
+
+                            <button type="button" title="Upload resume" onClick={() => document.getElementById('hidden-resume-input').click()} className="agent-send-button" style={{ marginRight: 8 }}>
+                                <img src={paperclipIcon} alt="Attach" />
+                            </button>
+
                             <button type="submit" disabled={loading} className="agent-send-button">
                                 <img src={sendIcon} alt="Send" />
                             </button>
                         </form>
+                        {uploading && <div style={{ padding: 8, color: '#aebfc2' }}>Uploading and processing resume...</div>}
+                        {resumeFeedback && (
+                            <div style={{ padding: '8px 12px', color: '#cfeadf' }}>
+                                <strong>Resume Feedback:</strong>
+                                <div><strong>Strengths:</strong> {resumeFeedback.strengths?.join(', ')}</div>
+                                <div><strong>Improvements:</strong> {resumeFeedback.improvements?.join(', ')}</div>
+                            </div>
+                        )}
                     </>
                 );
             case 'jobs':
