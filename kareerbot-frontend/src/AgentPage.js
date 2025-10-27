@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './AgentPage.css';
+// AgentPage is rendered by parent SPA router; no react-router needed here
 
 // Import Agent Landing and Payment components
 import AgentLandingPage from './AgentLandingPage';
@@ -96,10 +97,7 @@ const AGENT_WELCOME = {
 };
 
 // --- The Main Agent Page Component ---
-export default function AgentPage({ agentPurchased, setAgentPurchased }) {
-    // State to manage the active tab in the main dashboard
-    const [activeView, setActiveView] = useState(agentPurchased ? 'chat' : 'landing'); 
-    
+export default function AgentPage({ currentPath, navigate, agentPurchased, setAgentPurchased }) {
     // NEW STATE: Manages the transition to the payment page
     const [showPaymentPage, setShowPaymentPage] = useState(false); 
 
@@ -111,21 +109,47 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
     const [resumeFeedback, setResumeFeedback] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [planConfirmed, setPlanConfirmed] = useState(false);
+    const [onboardingMode, setOnboardingMode] = useState('collect_docs'); // collect_docs | await_goal | plan_pending | active
+    const [pendingPlan, setPendingPlan] = useState(null);
     const chatEndRef = useRef(null);
     const [userGoalPlan, setUserGoalPlan] = useState(null);
 
-    // Scroll to bottom of chat
+    // derive active view from parent-provided currentPath
+    const pathAfterAgent = (currentPath || '').split('/agent/')[1] || '';
+    const activeView = pathAfterAgent.split('/')[0] || 'chat';
+
+    // Scroll to bottom of chat when in chat view
     useEffect(() => {
         if (activeView === 'chat') {
             chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
     }, [chatHistory, activeView]);
 
+    const token = localStorage.getItem('kb_token');
+    const userId = localStorage.getItem('kb_user_id') || 'default';
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // Load saved plan from backend on mount (per-user)
+    useEffect(() => {
+        async function fetchSavedPlan() {
+            try {
+                const res = await axios.get(`http://localhost:5000/api/load-plan`, { headers: authHeaders });
+                if (res.data && res.data.plan) {
+                    setUserGoalPlan(res.data.plan);
+                    setPlanConfirmed(true);
+                }
+            } catch (e) {
+                console.warn('No saved plan found or load failed', e);
+            }
+        }
+        fetchSavedPlan();
+    }, [token]);
+
     // 1. Landing Page -> Payment Page
     const handlePurchaseClick = () => {
         // Move from Landing Page to Payment Page
         setShowPaymentPage(true); 
-        setActiveView('landing'); // Keep 'landing' active view name for rendering logic
+    navigate('/agent'); // ensure route stays under /agent
     };
 
     // 2. Payment Page -> Main Agent Page (Simulated Success)
@@ -138,7 +162,7 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
         // 2. Hide payment page
         setShowPaymentPage(false); 
         // 3. Navigate to the default active view (chat)
-        setActiveView('chat'); 
+    navigate('/agent/chat');
         // -------------------------------
     };
 
@@ -155,7 +179,7 @@ export default function AgentPage({ agentPurchased, setAgentPurchased }) {
     // We rename the old one to avoid conflict, though it's now internal logic.
     const handleChatPurchase = () => {
         setAgentPurchased(true); 
-        setActiveView('chat'); 
+    navigate('/agent/chat');
         setChatHistory([AGENT_WELCOME]); 
     };
 
@@ -166,8 +190,8 @@ const handleChatSubmit = async (e) => {
     if (!chatInput.trim() || loading) return;
 
     const userMessage = chatInput;
-    // Treat the next user message as goal if a plan has not yet been generated
-    const isGoalSetting = !userGoalPlan;
+    // Treat as goal-setting only when user is in onboarding 'await_goal' or no plan exists and still collecting docs
+    const isGoalSetting = onboardingMode === 'await_goal' || (onboardingMode === 'collect_docs' && !userGoalPlan);
 
     setChatHistory(prev => [...prev, { sender: 'user', text: userMessage }]);
     setChatInput('');
@@ -178,14 +202,14 @@ const handleChatSubmit = async (e) => {
             const goal = userMessage;
 
             // 1. Get Plan
-            const planRes = await axios.post("http://localhost:5000/api/agent-plan", { goal });
+                    const planRes = await axios.post("http://localhost:5000/api/agent-plan", { goal }, { headers: authHeaders });
             const initialPlan = planRes.data.plan;
 
             // 2. Get Prediction using uploaded resume if present
             let predictionData = { success_score: 50, justification: 'No resume provided.' };
             if (fullResumeText) {
                 try {
-                    const predRes = await axios.post('http://localhost:5000/api/predict-success', { resumeText: fullResumeText, goal });
+                    const predRes = await axios.post('http://localhost:5000/api/predict-success', { resumeText: fullResumeText, goal }, { headers: authHeaders });
                     predictionData = predRes.data.prediction;
                 } catch (pe) {
                     console.warn('Prediction failed', pe);
@@ -199,16 +223,17 @@ const handleChatSubmit = async (e) => {
                 plan: initialPlan.plan.map(step => ({ ...step, isComplete: false }))
             };
 
-            setUserGoalPlan(fullPlan);
-            console.log('User goal plan set:', fullPlan);
-            setChatHistory(prev => [...prev, { sender: 'bot', text: `✅ GOAL SET: ${goal}\nPrediction: ${predictionData.success_score}%\n${predictionData.justification}\nReview your plan in MyGoal.` }]);
-        } else {
+            // set pending plan and ask user to confirm in chat
+            setPendingPlan(fullPlan);
+            setOnboardingMode('plan_pending');
+            setChatHistory(prev => [...prev, { sender: 'bot', text: `✅ I have generated a proposed plan for: ${goal}\nPrediction: ${predictionData.success_score}%\n${predictionData.justification}\nPlan (pointwise):\n${fullPlan.plan.map((p, i) => `${i+1}. ${p.step} - ${p.description}`).join('\n')}` }]);
+            } else {
             const chatHistoryPayload = chatHistory.map(msg => ({ sender: msg.sender, text: msg.text }));
-            const res = await axios.post("http://localhost:5000/api/agent-query", { 
+                const res = await axios.post("http://localhost:5000/api/agent-query", { 
                 query: userMessage,
                 chat_history: chatHistoryPayload,
                 persona: persona
-            });
+            }, { headers: authHeaders });
             const botReply = res.data.reply;
             setChatHistory(prev => [...prev, { sender: 'bot', text: botReply }]);
         }
@@ -224,7 +249,7 @@ const handleChatSubmit = async (e) => {
     // --- Renderers for the main content area ---
     const renderContent = () => {
         switch (activeView) {
-            case 'myGoal':
+            case 'mygoal':
                 if (planConfirmed && userGoalPlan) {
                     // Render visual roadmap flow using existing CSS
                     return (
@@ -261,11 +286,11 @@ const handleChatSubmit = async (e) => {
                     if (!userGoalPlan) return;
                     const newGoal = userGoalPlan.goal + ' (revise)';
                     try {
-                        const resp = await axios.post('http://localhost:5000/api/agent-plan', { goal: newGoal });
-                        setUserGoalPlan(resp.data.plan);
-                    } catch (e) {
-                        console.error('Change plan failed', e);
-                    }
+                            const resp = await axios.post('http://localhost:5000/api/agent-plan', { goal: newGoal }, { headers: authHeaders });
+                            setUserGoalPlan(resp.data.plan);
+                        } catch (e) {
+                            console.error('Change plan failed', e);
+                        }
                 }} />;
             case 'chat':
                 return (
@@ -314,11 +339,13 @@ const handleChatSubmit = async (e) => {
                                 const form = new FormData();
                                 form.append('file', file);
                                 try {
-                                    const res = await axios.post('http://localhost:5000/api/process-resume', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                    const res = await axios.post('http://localhost:5000/api/process-resume', form, { headers: { 'Content-Type': 'multipart/form-data', ...authHeaders } });
                                     const data = res.data;
                                     if (data.feedback) setResumeFeedback(data.feedback);
                                     if (data.resume_text) setFullResumeText(data.resume_text);
-                                    setChatHistory(prev => [...prev, { sender: 'bot', text: '✅ Resume uploaded and ingested. You can now set your goal in this chat.' }]);
+                                    // move to awaiting goal state
+                                    setOnboardingMode('await_goal');
+                                    setChatHistory(prev => [...prev, { sender: 'bot', text: '✅ Resume uploaded and ingested. Please provide your career goal (one sentence). Example: Become a Full Stack Developer.' }]);
                                 } catch (err) {
                                     console.error('Upload error', err);
                                     setChatHistory(prev => [...prev, { sender: 'bot', text: '❌ Failed to upload resume. See console for details.' }]);
@@ -342,6 +369,28 @@ const handleChatSubmit = async (e) => {
                                 <strong>Resume Feedback:</strong>
                                 <div><strong>Strengths:</strong> {resumeFeedback.strengths?.join(', ')}</div>
                                 <div><strong>Improvements:</strong> {resumeFeedback.improvements?.join(', ')}</div>
+                            </div>
+                        )}
+
+                        {onboardingMode === 'plan_pending' && pendingPlan && (
+                            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                                <button className="goal-submit-button" onClick={async () => {
+                                    // Confirm plan: save to userGoalPlan, persist to backend, and set active
+                                    setUserGoalPlan(pendingPlan);
+                                    try {
+                                                    await axios.post(`http://localhost:5000/api/save-plan`, { user_id: userId, plan: pendingPlan }, { headers: authHeaders });
+                                    } catch (e) {
+                                        console.warn('Failed to save plan to backend', e);
+                                    }
+                                    setPlanConfirmed(true);
+                                    setOnboardingMode('active');
+                                    setPendingPlan(null);
+                                    setChatHistory(prev => [...prev, { sender: 'bot', text: '✅ Roadmap has been set for your goal and saved. All the best! You can view it in MyGoal.' }]);
+                                }}>Confirm Plan</button>
+                                <button className="goal-submit-button" onClick={() => {
+                                    setOnboardingMode('await_goal');
+                                    setChatHistory(prev => [...prev, { sender: 'bot', text: 'Okay — please provide the revised goal or tell me what to change in the plan.' }]);
+                                }}>Change Plan</button>
                             </div>
                         )}
                     </>
@@ -381,45 +430,33 @@ const handleChatSubmit = async (e) => {
             <div className="dashboard-sidebar">
                 <h1 className="sidebar-logo">Your AI Dashboard</h1>
                 <nav className="sidebar-nav">
-                    <button 
-                        className={`nav-item ${activeView === 'myGoal' ? 'active' : ''}`} 
-                        onClick={() => setActiveView('myGoal')}
-                    >
+                    <button className={`nav-item`} onClick={() => navigate('/agent/mygoal')}>
                         <img src={MyGoalIcon} alt="My Goal" className="nav-icon" /> MyGoal
                     </button>
-                    <button 
-                        className={`nav-item ${activeView === 'chat' ? 'active' : ''}`} 
-                        onClick={() => setActiveView('chat')}
-                    >
+                    <button className={`nav-item`} onClick={() => navigate('/agent/chat')}>
                         <img src={ChatIcon} alt="Chat" className="nav-icon" /> Chat
                     </button>
-                    <button 
-                        className={`nav-item ${activeView === 'jobs' ? 'active' : ''}`} 
-                        onClick={() => setActiveView('jobs')}
-                    >
+                    <button className={`nav-item`} onClick={() => navigate('/agent/jobs')}>
                         <img src={JobsIcon} alt="Jobs" className="nav-icon" /> Jobs
                     </button>
-                    <button 
-                        className={`nav-item ${activeView === 'statistics' ? 'active' : ''}`} 
-                        onClick={() => setActiveView('statistics')}
-                    >
+                    <button className={`nav-item`} onClick={() => navigate('/agent/statistics')}>
                         <img src={StatisticsIcon} alt="Statistics" className="nav-icon" /> Statistics
                     </button>
-                    <button 
-                        className={`nav-item ${activeView === 'tutorials' ? 'active' : ''}`} 
-                        onClick={() => setActiveView('tutorials')}
-                    >
+                    <button className={`nav-item`} onClick={() => navigate('/agent/tutorials')}>
                         <img src={TutorialsIcon} alt="Tutorials" className="nav-icon" /> Tutorials
                     </button>
                 </nav>
+                <div style={{ padding: 12 }}>
+                    <button onClick={() => { localStorage.removeItem('kb_token'); localStorage.removeItem('kb_user_id'); window.location.href = '/login'; }} className="goal-submit-button">Logout</button>
+                </div>
                 <div className="sidebar-footer">
                     September 30, 2025, 13:25
                 </div>
             </div>
             <div className="dashboard-main-content">
-                <div className="content-area">
-                    {renderContent()}
-                </div>
+                    <div className="content-area">
+                        {renderContent()}
+                    </div>
             </div>
         </div>
     );

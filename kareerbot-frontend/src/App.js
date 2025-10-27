@@ -66,7 +66,7 @@
 //   );
 // }
 
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import ResumeBotPage from './ResumeBotPage';
 import AgentPage from './AgentPage';
@@ -74,16 +74,30 @@ import userIcon from './user.png';
 // Import the new icons for the App-level navigation (assuming they are in src/icons or src)
 import NotificationIcon from './icons/notification-icon.png'; 
 import ProfileIcon from './icons/profile-icon.png'; 
+import LoginPage from './LoginPage';
+import RegisterPage from './RegisterPage';
+import LandingPage from './LandingPage';
 
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('resumeBot');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [agentPurchased, setAgentPurchased] = useState(false); // New global state
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [agentPurchased, setAgentPurchased] = React.useState(false); // New global state
+  const [currentPath, setCurrentPath] = React.useState(window.location.pathname || '/');
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+  // central navigate function updates history and state
+  const navigate = (to) => {
+    if (to === currentPath) return;
+    window.history.pushState({}, '', to);
+    setCurrentPath(to);
   };
+
+  React.useEffect(() => {
+    const onPop = () => setCurrentPath(window.location.pathname || '/');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   
   
   return (
@@ -119,21 +133,10 @@ export default function App() {
       {/* NEW TOP NAVIGATION BAR */}
       <nav className="top-nav-app">
         <div className="top-nav-buttons">
-          <button 
-            className={`top-nav-btn ${currentPage === 'resumeBot' ? 'active' : ''}`} 
-            onClick={() => setCurrentPage('resumeBot')}
-          >
-            Resume Bot
-          </button>
-          <button 
-            className={`top-nav-btn ${currentPage === 'agentPage' ? 'active' : ''}`} 
-            onClick={() => setCurrentPage('agentPage')}
-          >
-            AI Agent
-          </button>
+          <button className="top-nav-btn" onClick={() => navigate('/resume')}>Resume Bot</button>
+          <button className="top-nav-btn" onClick={() => navigate('/agent/chat')}>AI Agent</button>
         </div>
         <div className="top-nav-icons">
-          {/* These are the icons that were missing! */}
           <img src={NotificationIcon} alt="Notifications" className="top-icon" />
           <img src={ProfileIcon} alt="Profile" className="top-icon" />
         </div>
@@ -141,14 +144,11 @@ export default function App() {
       {/* END NEW TOP NAVIGATION BAR */}
 
       <div className="main-content-pane">
-        {currentPage === 'resumeBot' ? (
-          <ResumeBotPage onSidebarToggle={toggleSidebar} />
-        ) : (
-          <AgentPage 
-            agentPurchased={agentPurchased} 
-            setAgentPurchased={setAgentPurchased} 
-          />
-        )}
+        {currentPath === '/' && <LandingPage navigate={navigate} />}
+        {currentPath === '/resume' && (localStorage.getItem('kb_token') ? <ResumeBotPage onSidebarToggle={toggleSidebar} /> : <LandingPage navigate={navigate} />)}
+        {currentPath === '/login' && <LandingPage navigate={navigate} />}
+        {currentPath === '/register' && <LandingPage navigate={navigate} />}
+        {currentPath.startsWith('/agent') && (localStorage.getItem('kb_token') ? <AgentPage currentPath={currentPath} navigate={navigate} agentPurchased={agentPurchased} setAgentPurchased={setAgentPurchased} /> : <LandingPage navigate={navigate} />)}
       </div>
 
       {/* REMOVED: The bottom-nav is now obsolete */}

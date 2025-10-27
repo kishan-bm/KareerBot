@@ -1,0 +1,12 @@
+flask
+flask-cors
+python-dotenv
+langchain-google-genai
+langchain
+chromadb
+psycopg2-binary
+sqlalchemy
+werkzeug
+pypdf
+python-docx
+PyJWT

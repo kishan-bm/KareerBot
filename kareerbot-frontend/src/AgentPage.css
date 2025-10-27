@@ -880,8 +880,8 @@ body {
 }
 
 .flow-step {
-    width: 280px;
-    height: 350px; /* Fixed height for consistent look */
+    width: 300px;
+    height: 340px; /* Fixed height for consistent look */
     flex-shrink: 0; /* Prevents steps from shrinking */
     background-color: #2c3e50;
     border-radius: 10px;
@@ -939,6 +939,36 @@ body {
     font-size: 0.9rem;
     margin-bottom: 15px;
     color: #aebfc2;
+}
+.flow-step .step-description {
+    min-height: 72px;
+}
+
+.flow-step .skills-list h5 {
+    margin-top: 10px;
+    color: #cfeadf;
+}
+
+.flow-step .skills-list ul li {
+    margin-bottom: 6px;
+}
+
+.flow-connector {
+    width: 60px; /* Length of the connecting line */
+    height: 4px;
+    background-color: #4a4a4a;
+    margin: 0 5px;
+    flex-shrink: 0;
+    position: relative;
+    top: 0; /* Center vertically on the path */
+}
+
+.flow-connector.complete {
+    background: linear-gradient(90deg, #4CAF50, #1e5a36);
+}
+
+.goal-tracking-page-container {
+    padding: 30px;
 }
 
 .skills-list h5 {
